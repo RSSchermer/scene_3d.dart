@@ -1,0 +1,14 @@
+name: scene_3d
+description: 3D library for Dart.
+version: 0.0.1
+author: R.S. Schermer <roland0507@gmail.com>
+homepage: https://github.com/RSSchermer/bagl.dart
+documentation:
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  bagl: '>=0.1.0 <0.2.0'
+dev_dependencies:
+  test: '>=0.12.0 <0.13.0'
+  browser: '>=0.10.0 <0.11.0'
+  dart_to_js_script_rewriter: '^0.1.0'
