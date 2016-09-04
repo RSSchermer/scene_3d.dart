@@ -1,3 +1,3 @@
-# scene_3d: 3D library for Dart.
+# scene_3d: 3D Scene Library for Dart.
 
-WIP
+*WIP*
