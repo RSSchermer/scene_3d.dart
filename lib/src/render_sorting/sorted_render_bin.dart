@@ -9,23 +9,26 @@ class SortedRenderBin extends IterableBase<AtomicRenderUnit> {
 
   factory SortedRenderBin.defaultSorting() {
     // Set up branch for opaque render units
-    final opaqueUnitFactory =
-        new RenderUnitNodeFactory((renderUnit) => new ObservableValue(0));
-    final opaqueUnitGroupFactory = new RenderUnitGroupNodeFactory(
-        opaqueUnitFactory, () => new MaxSortCode());
-    final opaqueBranch =
-        new ProgramBranchingNode(opaqueUnitGroupFactory, new StaticSortCode(0));
+    makeOpaqueUnitNode(AtomicRenderUnit renderUnit) =>
+        new RenderUnitNode(renderUnit, new ObservableValue(0));
+
+    makeOpaqueUnitGroupNode() =>
+        new RenderUnitGroupNode(new StaticSortCode(0), makeOpaqueUnitNode);
+
+    final opaqueBranch = new ProgramBranchingNode(
+        new StaticSortCode(0), makeOpaqueUnitGroupNode);
 
     // Set up branch for translucent render units
-    final translucentUnitFactory = new RenderUnitNodeFactory((renderUnit) {
+    makeTranslucentUnitNode(AtomicRenderUnit renderUnit) {
       if (renderUnit is DistanceSortable) {
-        return renderUnit.distance;
+        return new RenderUnitNode(renderUnit, renderUnit.distance);
       } else {
-        return new ObservableValue(0);
+        return new RenderUnitNode(renderUnit, new ObservableValue(0));
       }
-    });
+    }
+
     final translucentBranch = new RenderUnitGroupNode(
-        translucentUnitFactory, new StaticSortCode(0),
+        new StaticSortCode(0), makeTranslucentUnitNode,
         sortOrder: SortOrder.descending);
 
     final root = new TranslucencyBranchingNode(opaqueBranch, translucentBranch);

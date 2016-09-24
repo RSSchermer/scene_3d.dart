@@ -15,10 +15,10 @@ abstract class ProgramGroupable extends AtomicRenderUnit {
 /// Grouping [AtomicRenderUnit] by [Program] can reduce the amount of shader
 /// program switching a GPU backend has to do.
 class ProgramBranchingNode extends BranchingNode {
-  /// The [BranchingNodeFactory] used by this [ProgramBranchingNode] to create
-  /// a new child branch when processing a [ProgramGroupable] [AtomicRenderUnit]
-  /// for which no suitable branch exists yet.
-  final BranchingNodeFactory childNodeFactory;
+  /// The function used by this [ProgramBranchingNode] to create a new child
+  /// branch when processing a [ProgramGroupable] [AtomicRenderUnit] for which
+  /// no suitable branch exists yet.
+  final BranchingNodeFactory makeChildNode;
 
   final SummarySortCode sortCode;
 
@@ -29,7 +29,7 @@ class ProgramBranchingNode extends BranchingNode {
   BranchingNode _defaultChild;
 
   /// Instantiates a new [ProgramBranchingNode].
-  ProgramBranchingNode(this.childNodeFactory, this.sortCode,
+  ProgramBranchingNode(this.sortCode, this.makeChildNode,
       {SortOrder sortOrder: SortOrder.unsorted}) {
     if (sortOrder == SortOrder.ascending) {
       _children = new SortedChildNodes.ascending(this);
@@ -48,7 +48,7 @@ class ProgramBranchingNode extends BranchingNode {
       var targetChild = _programsBranches[program];
 
       if (targetChild == null) {
-        targetChild = childNodeFactory.makeNode();
+        targetChild = makeChildNode();
         _programsBranches[program] = targetChild;
         _children.add(targetChild);
         sortCode.add(targetChild.sortCode);
@@ -63,7 +63,7 @@ class ProgramBranchingNode extends BranchingNode {
       return terminalNode;
     } else {
       if (_defaultChild == null) {
-        _defaultChild = childNodeFactory.makeNode();
+        _defaultChild = makeChildNode();
         _children.add(_defaultChild);
         sortCode.add(_defaultChild.sortCode);
       }

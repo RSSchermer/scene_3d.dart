@@ -1,8 +1,14 @@
 part of render_sorting;
 
-/// Function that resolves a [ObservableValue] that can serve as the sort code
-/// for the [renderUnit].
-typedef ObservableValue<num> SortCodeResolver(AtomicRenderUnit renderUnit);
+/// Function that returns a new [RenderUnitNode] for the [renderUnit].
+typedef RenderUnitNode RenderUnitNodeFactory(AtomicRenderUnit renderUnit);
+
+/// Function that returns a new BranchingNode
+typedef BranchingNode BranchingNodeFactory();
+
+/// Enumerates the ways in which the children of a [BranchingNode] may be
+/// ordered.
+enum SortOrder { ascending, descending, unsorted }
 
 /// Node in a sorted render tree.
 ///
@@ -144,16 +150,16 @@ class RenderUnitNode extends RenderSortTreeNode {
 
 /// A [BranchingNode] that holds some number of terminal [RenderUnitNode]s.
 class RenderUnitGroupNode extends BranchingNode {
-  /// The [RenderUnitNodeFactory] used to make new [RenderUnitNode]s when
-  /// processing an [AtomicRenderUnit].
-  final RenderUnitNodeFactory atomicRenderUnitNodeFactory;
+  /// The function used to make new [RenderUnitNode]s when processing an
+  /// [AtomicRenderUnit].
+  final RenderUnitNodeFactory makeAtomicRenderUnit;
 
   final SummarySortCode sortCode;
 
   ChildNodes _children;
 
   /// Instantiates a new [RenderUnitGroupNode].
-  RenderUnitGroupNode(this.atomicRenderUnitNodeFactory, this.sortCode,
+  RenderUnitGroupNode(this.sortCode, this.makeAtomicRenderUnit,
       {SortOrder sortOrder: SortOrder.unsorted}) {
     if (sortOrder == SortOrder.ascending) {
       _children = new SortedChildNodes.ascending(this);
@@ -167,7 +173,7 @@ class RenderUnitGroupNode extends BranchingNode {
   Iterable<RenderSortTreeNode> get children => _children;
 
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
-    final node = atomicRenderUnitNodeFactory.makeNode(renderUnit);
+    final node = makeAtomicRenderUnit(renderUnit);
 
     _children.add(node);
     sortCode.add(node.sortCode);
@@ -196,54 +202,6 @@ abstract class RenderTreeVisitor {
   /// Visit a terminal [RenderUnitNode].
   void visitRenderUnitNode(RenderUnitNode node);
 }
-
-/// Creates new [BranchingNode] instances.
-abstract class BranchingNodeFactory {
-  BranchingNode makeNode();
-}
-
-/// A [BranchingNodeFactory] that makes [RenderUnitGroupNode]s.
-class RenderUnitGroupNodeFactory extends BranchingNodeFactory {
-  /// The [RenderUnitNodeFactory] that [RenderUnitGroupNode]s created by this
-  /// factory will use to create new [RenderUnitNode]s.
-  final RenderUnitNodeFactory atomicRenderUnitNodeFactory;
-
-  /// The function used to resolve a [SummarySortCode] when a new
-  /// [RenderUnitGroupNode] is made.
-  final SummarySortCodeResolver summarySortCodeResolver;
-
-  /// The [SortOrder] that [RenderUnitGroupNode]s made with the factory will
-  /// use.
-  final SortOrder sortOrder;
-
-  /// Instantiates a new [RenderUnitGroupNodeFactory].
-  RenderUnitGroupNodeFactory(
-      this.atomicRenderUnitNodeFactory, this.summarySortCodeResolver,
-      {this.sortOrder: SortOrder.unsorted});
-
-  RenderUnitGroupNode makeNode() => new RenderUnitGroupNode(
-      atomicRenderUnitNodeFactory, summarySortCodeResolver(),
-      sortOrder: sortOrder);
-}
-
-/// Creates new [RenderUnitNode]s for [AtomicRenderUnit]s.
-class RenderUnitNodeFactory {
-  /// The function used to resolve an [ObservableValue] that can serve as the
-  /// sort code for an [AtomicRenderUnit].
-  final SortCodeResolver sortCodeResolver;
-
-  /// Instantiates a new [RenderUnitNodeFactory].
-  RenderUnitNodeFactory(this.sortCodeResolver);
-
-  /// Creates a new [RenderUnitNode] for the [renderUnit] with the given
-  /// [parentNode].
-  RenderUnitNode makeNode(AtomicRenderUnit renderUnit) =>
-      new RenderUnitNode(renderUnit, sortCodeResolver(renderUnit));
-}
-
-/// Enumerates the ways in which the children of a [BranchingNode] may be
-/// ordered.
-enum SortOrder { ascending, descending, unsorted }
 
 abstract class ChildNodes extends Iterable<RenderSortTreeNode> {
   /// The [BranchingNode] to which these [ChildNodes] belong.
