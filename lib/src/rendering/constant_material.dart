@@ -66,40 +66,127 @@ class ConstantTrianglesShapeRenderer {
 
 /// A [View] for a [ConstantTrianglesShape].
 class ConstantTrianglesShapeView implements View {
-  /// The [ConstantTrianglesShapeRenderer] used to draw the [shape].
-  final ConstantTrianglesShapeRenderer renderer;
+  /// The [ProgramPool] used by this [ConstantTrianglesShapeView].
+  final ProgramPool programPool;
 
   /// The [ConstantTrianglesShape] for which this is a [View].
   final ConstantTrianglesShape shape;
 
+  static final String vertexShaderSource = INLINE_ASSET('../../shaders/constant_material_vertex.glsl');
+
+  static final String fragmentShaderSource = INLINE_ASSET('../../shaders/constant_material_fragment.glsl');
+
+  final ConstantMaterial _material;
+
+  Program _program;
+
+  bool _useTransparencyMap = false;
+
+  bool _useEmissionMap = false;
+
+  bool _programNeedsUpdate = true;
+
   /// Instantiates a new [ConstantTrianglesShapeView].
-  ConstantTrianglesShapeView(this.shape, this.renderer);
+  ConstantTrianglesShapeView(ConstantTrianglesShape shape, this.programPool)
+      : shape = shape,
+        _material = shape.material;
 
   bool get isTransparent =>
       shape.material.transparency < 1.0 ||
       shape.material.transparencyMap != null;
 
   void render(Camera camera) {
-    renderer.render(shape, camera);
+    if ((_material.emissionMap != null) != _useEmissionMap) {
+      _useEmissionMap = !_useEmissionMap;
+      _programNeedsUpdate = true;
+    }
+
+    if ((_material.transparencyMap != null) != _useTransparencyMap) {
+      _useTransparencyMap = !_useTransparencyMap;
+      _programNeedsUpdate = true;
+    }
+
+    if (_programNeedsUpdate) {
+      _updateProgram();
+    }
+
+    final uniforms = <String, dynamic>{
+      'uWorld': shape.worldTransform,
+      'uViewProjection': camera.viewProjectionTransform
+    };
+
+    if (_useEmissionMap) {
+      uniforms['uEmissionMapSampler'] = _resolveSampler2D(_material.emissionMap);
+    } else {
+      uniforms['uEmissionColor'] = _material.emissionColor;
+    }
+
+    if (_useTransparencyMap) {
+      uniforms['uTransparencyMapSampler'] = _resolveSampler2D(_material.transparencyMap);
+    } else {
+      uniforms['uTransparency'] = _material.transparency;
+    }
+
+    frame.draw(
+        shape.primitives,
+        _program,
+        uniforms,
+        blending: _material.blending,
+        depthTest: _material.depthTest,
+        stencilTest: _material.stencilTest,
+        faceCulling: _material.faceCulling,
+        attributeNameMap: const {
+          'aPosition': 'position',
+          'aTexCoord': 'texCoord'
+        });
   }
 
-  void decommission() {}
+  void decommission() {
+    programPool.release(_program);
+  }
+
+  void _updateProgram() {
+    final fragmentDefines = """
+    #define USE_EMISSION_MAP ${_useEmissionMap}
+    #define USE_TRANSPARENCY_MAP ${_useTransparencyMap}
+    """;
+
+    if (_program != null) {
+      programPool.release(_program);
+    }
+
+    _program = programPool.acquire(vertexShaderSource, fragmentDefines + fragmentShaderSource);
+  }
+
+  Sampler2D _resolveSampler2D(Texture2D texture) {
+    if (texture != null) {
+      var sampler = textureSampler2D[texture];
+
+      if (sampler == null) {
+        sampler = new Sampler2D(texture);
+        textureSampler2D[texture] = sampler;
+      }
+
+      return sampler;
+    } else {
+      return null;
+    }
+  }
 }
 
 /// [ChainableViewFactory] which can make [ConstantTrianglesShapeView]s for
 /// [ConstantTrianglesShape]s.
 class ConstantTrianglesShapeViewFactory extends ChainableViewFactory {
-  /// The [ConstantTrianglesShapeRenderer] that any [ConstantTrianglesShapeView]
-  /// made by this [ConstantTrianglesShapeViewFactory] will use to draw their
-  /// shape.
-  final ConstantTrianglesShapeRenderer renderer;
+  /// The [ProgramPool] which [ConstantTrianglesShapeView]s made by this factory
+  /// will use.
+  final ProgramPool programPool;
 
   /// Instantiates a new [ConstantTrianglesShapeViewFactory].
-  ConstantTrianglesShapeViewFactory(this.renderer);
+  ConstantTrianglesShapeViewFactory(this.programPool);
 
   View makeView(Object object) {
     if (object is ConstantTrianglesShape) {
-      return new ConstantTrianglesShapeView(object, renderer);
+      return new ConstantTrianglesShapeView(object, programPool);
     } else {
       return super.makeView(object);
     }

@@ -5,7 +5,7 @@ class ConstantMaterial implements Material {
 
   Blending blending;
 
-  DepthTest depthTest;
+  DepthTest depthTest = const DepthTest();
 
   StencilTest stencilTest;
 
