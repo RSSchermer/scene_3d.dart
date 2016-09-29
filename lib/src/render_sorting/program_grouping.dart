@@ -28,6 +28,8 @@ class ProgramBranchingNode extends BranchingNode {
 
   BranchingNode _defaultChild;
 
+  final Set<RenderUnitNode> _needReprocessing = new Set();
+
   /// Instantiates a new [ProgramBranchingNode].
   ProgramBranchingNode(this.sortCode, this.makeChildNode,
       {SortOrder sortOrder: SortOrder.unsorted}) {
@@ -41,6 +43,7 @@ class ProgramBranchingNode extends BranchingNode {
   }
 
   Iterable<RenderSortTreeNode> get children => _children;
+
 
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
     if (renderUnit is ProgramGroupable) {
@@ -57,7 +60,7 @@ class ProgramBranchingNode extends BranchingNode {
       final terminalNode = targetChild.process(renderUnit);
 
       renderUnit.program.subscribe(this, (newValue, oldValue) {
-        terminalNode.reprocess(this);
+        _needReprocessing.add(terminalNode);
       });
 
       return terminalNode;
@@ -88,9 +91,62 @@ class ProgramBranchingNode extends BranchingNode {
     return success;
   }
 
-  void cancelSubscriptions(AtomicRenderUnit renderUnit) {
+  void cancelSubscriptions(RenderUnitNode renderUnitNode) {
+    final renderUnit = renderUnitNode.renderUnit;
+
     if (renderUnit is ProgramGroupable) {
       renderUnit.program.unsubscribe(this);
+      _needReprocessing.remove(renderUnitNode);
     }
+  }
+
+  void sort() {
+    for (var node in _needReprocessing) {
+      node.reprocess(this);
+    }
+
+    _needReprocessing.clear();
+
+    for (var child in children) {
+      child.sort();
+    }
+
+    _children.sort();
+  }
+
+  ProgramBranchingNode toRenderSortTree() {
+    final newSortCode = sortCode.asEmpty();
+    final result = new ProgramBranchingNode(newSortCode, makeChildNode, sortOrder: _children.sortOrder);
+
+    _programsBranches.forEach((program, branch) {
+      final newBranch = branch.toRenderSortTree();
+
+      result._children.add(newBranch);
+      result._programsBranches[program] = newBranch;
+      newSortCode.add(newBranch.sortCode);
+    });
+
+    if (_defaultChild != null) {
+      final newDefault = _defaultChild.toRenderSortTree();
+
+      result._children.add(newDefault);
+      result._defaultChild = newDefault;
+      newSortCode.add(newDefault.sortCode);
+    }
+
+    final iterator = new _RenderTreeLeafIterator(result);
+
+    while (iterator.moveNext()) {
+      final renderUnitNode = iterator.current;
+      final renderUnit = renderUnitNode.renderUnit;
+
+      if (renderUnit is ProgramGroupable) {
+        renderUnit.program.subscribe(result, (newValue, oldValue) {
+          renderUnitNode.reprocess(result);
+        });
+      }
+    }
+
+    return result;
   }
 }

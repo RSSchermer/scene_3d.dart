@@ -1,6 +1,6 @@
 part of render_sorting;
 
-class SortedRenderBin extends IterableBase<AtomicRenderUnit> {
+class SortedRenderBin extends SetBase<AtomicRenderUnit> implements Set<AtomicRenderUnit> {
   final BranchingNode renderSortTree;
 
   final Map<AtomicRenderUnit, RenderUnitNode> _renderUnitsNodes = {};
@@ -37,30 +37,52 @@ class SortedRenderBin extends IterableBase<AtomicRenderUnit> {
   }
 
   Iterator<AtomicRenderUnit> get iterator =>
-      new RenderSortTreeIterator(renderSortTree);
+      new _RenderUnitIterator(new _RenderTreeLeafIterator(renderSortTree));
 
-  void add(AtomicRenderUnit renderUnit) {
-    if (_renderUnitsNodes.containsKey(renderUnit)) {
+  int get length => _renderUnitsNodes.length;
+
+  bool add(AtomicRenderUnit renderUnit) {
+    if (!_renderUnitsNodes.containsKey(renderUnit)) {
       _renderUnitsNodes[renderUnit] = renderSortTree.process(renderUnit);
-    }
-  }
 
-  bool remove(AtomicRenderUnit renderUnit) {
-    final node = _renderUnitsNodes[renderUnit];
-
-    if (node != null) {
-      _renderUnitsNodes[renderUnit] = null;
-
-      return node.release();
+      return true;
     } else {
       return false;
     }
   }
+
+  bool contains(Object value) => _renderUnitsNodes.containsKey(value);
+
+  AtomicRenderUnit lookup(Object value) {
+    if (value is AtomicRenderUnit && _renderUnitsNodes.containsKey(value)) {
+      return _renderUnitsNodes[value].renderUnit;
+    } else {
+      return null;
+    }
+  }
+
+  bool remove(Object value) {
+    if (value is AtomicRenderUnit) {
+      final node = _renderUnitsNodes[value];
+
+      if (node != null) {
+        _renderUnitsNodes.remove(value);
+
+        return node.release();
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  Set<AtomicRenderUnit> toSet() => new SortedRenderBin(renderSortTree.toRenderSortTree());
 }
 
-class RenderSortTreeIterator
-    implements Iterator<AtomicRenderUnit>, RenderTreeVisitor {
-  final RenderSortTreeNode sortTree;
+class _RenderTreeLeafIterator
+    implements Iterator<RenderUnitNode>, RenderTreeVisitor {
+  final RenderSortTreeNode rootNode;
 
   RenderUnitNode _currentNode = null;
 
@@ -68,11 +90,12 @@ class RenderSortTreeIterator
 
   bool _terminated = false;
 
-  RenderSortTreeIterator(this.sortTree) {
-    _currentNode = sortTree;
+  _RenderTreeLeafIterator(this.rootNode) {
+    _currentNode = rootNode;
+    rootNode.sort();
   }
 
-  AtomicRenderUnit get current => _currentNode.atomicRenderUnit;
+  RenderUnitNode get current => _currentNode;
 
   bool moveNext() {
     _currentNode.accept(this);
@@ -121,4 +144,14 @@ class RenderSortTreeIterator
       }
     }
   }
+}
+
+class _RenderUnitIterator implements Iterator<AtomicRenderUnit> {
+  final _RenderTreeLeafIterator leafIterator;
+
+  _RenderUnitIterator(this.leafIterator);
+
+  AtomicRenderUnit get current => leafIterator.current.renderUnit;
+
+  bool moveNext() => leafIterator.moveNext();
 }

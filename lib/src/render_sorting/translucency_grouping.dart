@@ -23,6 +23,8 @@ class TranslucencyBranchingNode extends BranchingNode {
 
   final ObservableValue<num> sortCode;
 
+  final Set<RenderUnitNode> _needReprocessing = new Set();
+
   /// Instantiates a new [TranslucencyBranchingNode].
   TranslucencyBranchingNode(this.opaqueBranch, this.translucentBranch,
       [ObservableValue<num> sortCode])
@@ -56,7 +58,7 @@ class TranslucencyBranchingNode extends BranchingNode {
           : opaqueBranch.process(renderUnit);
 
       renderUnit.isTranslucent.subscribe(this, (newValue, oldValue) {
-        terminalNode.reprocess(this);
+        _needReprocessing.add(terminalNode);
       });
 
       return terminalNode;
@@ -67,9 +69,45 @@ class TranslucencyBranchingNode extends BranchingNode {
 
   bool removeChild(RenderSortTreeNode childNode) => false;
 
-  void cancelSubscriptions(AtomicRenderUnit renderUnit) {
+  void cancelSubscriptions(RenderUnitNode renderUnitNode) {
+    final renderUnit = renderUnitNode.renderUnit;
+
     if (renderUnit is TranslucencyGroupable) {
       renderUnit.isTranslucent.unsubscribe(this);
+      _needReprocessing.remove(renderUnitNode);
     }
+  }
+
+  void sort() {
+    for (var node in _needReprocessing) {
+      node.reprocess(this);
+    }
+
+    for (var child in children) {
+      child.sort();
+    }
+
+    _needReprocessing.clear();
+  }
+
+  TranslucencyBranchingNode toRenderSortTree() {
+    final newOpaqueBranch = opaqueBranch.toRenderSortTree();
+    final newTranslucentBranch = translucentBranch.toRenderSortTree();
+    final result = new TranslucencyBranchingNode(newOpaqueBranch, newTranslucentBranch, sortCode);
+
+    final iterator = new _RenderTreeLeafIterator(result);
+
+    while (iterator.moveNext()) {
+      final renderUnitNode = iterator.current;
+      final renderUnit = renderUnitNode.renderUnit;
+
+      if (renderUnit is TranslucencyGroupable) {
+        renderUnit.isTranslucent.subscribe(result, (newValue, oldValue) {
+          renderUnitNode.reprocess(result);
+        });
+      }
+    }
+
+    return result;
   }
 }

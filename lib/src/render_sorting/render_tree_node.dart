@@ -55,6 +55,23 @@ abstract class RenderSortTreeNode {
   /// `true` if the node was released successfully, returns `false` if the node
   /// was already parentless or could not be released from its parent.
   bool release();
+
+  /// Updates the node order of the tree represented by this
+  /// [RenderSortTreeNode] to reflect the current state of its
+  /// [AtomicRenderUnit]s.
+  ///
+  /// Although new nodes are inserted in order, state changes in
+  /// [AtomicRenderUnit]s processed previously may degenerate the sort order of
+  /// the tree, causing [AtomicRenderUnit]s to no longer be in the correct
+  /// branch or causing the order of branches to no longer reflect expected
+  /// order. Calling this method reprocess [AtomicRenderUnit]s down different
+  /// branches as necessary and updates the order of the branches to once again
+  /// reflect the expected order.
+  void sort();
+
+  /// Returns a new copy of the subtree represented by this
+  /// [RenderSortTreeNode].
+  RenderSortTreeNode toRenderSortTree();
 }
 
 /// A [RenderSortTreeNode] that branches into one or more [children].
@@ -86,8 +103,8 @@ abstract class BranchingNode extends RenderSortTreeNode {
   bool removeChild(RenderSortTreeNode childNode);
 
   /// Cancels all subscriptions this [BranchingNode] has on any observable
-  /// values that belong to the [renderUnit].
-  void cancelSubscriptions(AtomicRenderUnit renderUnit);
+  /// values on the [renderUnitNode] or its [AtomicRenderUnit].
+  void cancelSubscriptions(RenderUnitNode renderUnitNode);
 
   bool release() {
     if (parentNode != null) {
@@ -101,12 +118,12 @@ abstract class BranchingNode extends RenderSortTreeNode {
 /// A terminal [RenderSortTreeNode] that holds one [AtomicRenderUnit].
 class RenderUnitNode extends RenderSortTreeNode {
   /// The [AtomicRenderUnit] held by this [RenderUnitNode].
-  final AtomicRenderUnit atomicRenderUnit;
+  final AtomicRenderUnit renderUnit;
 
   final ObservableValue<num> sortCode;
 
-  /// Instantiates a new [AtomicRenderUnit].
-  RenderUnitNode(this.atomicRenderUnit, this.sortCode);
+  /// Instantiates a new [RenderUnitNode].
+  RenderUnitNode(this.renderUnit, this.sortCode);
 
   void accept(RenderTreeVisitor visitor) {
     visitor.visitRenderUnitNode(this);
@@ -116,7 +133,7 @@ class RenderUnitNode extends RenderSortTreeNode {
     var node = parentNode;
 
     while (node != null) {
-      node.cancelSubscriptions(atomicRenderUnit);
+      node.cancelSubscriptions(this);
 
       node = node.parentNode;
     }
@@ -129,37 +146,41 @@ class RenderUnitNode extends RenderSortTreeNode {
   }
 
   /// Releases this [RenderUnitNode] from the tree and reprocesses the
-  /// [atomicRenderUnit] at the [reentryNode].
+  /// [renderUnit] at the [reentryNode].
   ///
   /// Typically called by a [BranchingNode] higher up in the tree when the
-  /// [atomicRenderUnit]'s state changes in a way that requires assigning it to
+  /// [renderUnit]'s state changes in a way that requires assigning it to
   /// a different branch.
   void reprocess(BranchingNode reentryNode) {
     var node = parentNode;
 
     while (node != reentryNode && node != null) {
-      node.cancelSubscriptions(atomicRenderUnit);
+      node.cancelSubscriptions(this);
 
       node = node.parentNode;
     }
 
     parentNode?.removeChild(this);
-    reentryNode.process(atomicRenderUnit);
+    reentryNode.process(renderUnit);
   }
+
+  void sort() {}
+
+  RenderUnitNode toRenderSortTree() => new RenderUnitNode(renderUnit, sortCode);
 }
 
 /// A [BranchingNode] that holds some number of terminal [RenderUnitNode]s.
 class RenderUnitGroupNode extends BranchingNode {
   /// The function used to make new [RenderUnitNode]s when processing an
   /// [AtomicRenderUnit].
-  final RenderUnitNodeFactory makeAtomicRenderUnit;
+  final RenderUnitNodeFactory makeRenderUnitNode;
 
   final SummarySortCode sortCode;
 
   ChildNodes _children;
 
   /// Instantiates a new [RenderUnitGroupNode].
-  RenderUnitGroupNode(this.sortCode, this.makeAtomicRenderUnit,
+  RenderUnitGroupNode(this.sortCode, this.makeRenderUnitNode,
       {SortOrder sortOrder: SortOrder.unsorted}) {
     if (sortOrder == SortOrder.ascending) {
       _children = new SortedChildNodes.ascending(this);
@@ -173,7 +194,7 @@ class RenderUnitGroupNode extends BranchingNode {
   Iterable<RenderSortTreeNode> get children => _children;
 
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
-    final node = makeAtomicRenderUnit(renderUnit);
+    final node = makeRenderUnitNode(renderUnit);
 
     _children.add(node);
     sortCode.add(node.sortCode);
@@ -191,7 +212,23 @@ class RenderUnitGroupNode extends BranchingNode {
     return success;
   }
 
-  void cancelSubscriptions(AtomicRenderUnit renderUnit) {}
+  void cancelSubscriptions(RenderUnitNode renderUnitNode) {}
+
+  void sort() {
+    _children.sort();
+  }
+
+  RenderUnitGroupNode toRenderSortTree() {
+    final newSortCode = sortCode.asEmpty();
+    final result = new RenderUnitGroupNode(newSortCode, makeRenderUnitNode, sortOrder: _children.sortOrder);
+
+    for (var child in _children) {
+      result._children.add(child.toRenderSortTree());
+      newSortCode.add(child.sortCode);
+    }
+
+    return result;
+  }
 }
 
 /// Defines an interface for [RenderSortTreeNode] visitors.
@@ -203,6 +240,7 @@ abstract class RenderTreeVisitor {
   void visitRenderUnitNode(RenderUnitNode node);
 }
 
+/// Represent the child nodes of a [BranchingNode].
 abstract class ChildNodes extends Iterable<RenderSortTreeNode> {
   /// The [BranchingNode] to which these [ChildNodes] belong.
   BranchingNode get owner;
@@ -222,18 +260,27 @@ abstract class ChildNodes extends Iterable<RenderSortTreeNode> {
   /// Returns `true` if the [node] was a child node of the [owner], `false`
   /// otherwise. Leaves the node parentless and without siblings; a root node.
   bool remove(RenderSortTreeNode node);
+
+  /// Sorts the nodes by sort code according to the [sortOrder].
+  ///
+  /// Does nothing if the [sortOrder] is [SortOrder.unsorted].
+  void sort();
 }
 
 /// Implementation of [ChildNodes] in which child nodes are sorted by their
 /// sort code in ascending or descending order.
 ///
-/// The order of the child nodes is maintained automatically by observing the
-/// children's sort code values.
+/// New child nodes are inserted in order. However, changes to sort codes at a
+/// later time may degenerate the order of the nodes. Call [sort] to rearrange
+/// the nodes in the expected order.
 class SortedChildNodes extends IterableBase<RenderSortTreeNode>
     implements ChildNodes {
   final BranchingNode owner;
 
   final SortOrder sortOrder;
+
+  final Set<RenderSortTreeNode> _needHeadShift = new Set();
+  final Set<RenderSortTreeNode> _needTailShift = new Set();
 
   /// Creates a new [SortedChildNodes] instance for the given [owner] in which
   /// nodes will be sorted by their sort codes in ascending order.
@@ -249,11 +296,9 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
 
   RenderSortTreeNode _last;
 
-  RenderSortTreeNode get first =>
-      sortOrder == SortOrder.ascending ? _first : _last;
+  RenderSortTreeNode get first => sortOrder == SortOrder.ascending ? _first : _last;
 
-  RenderSortTreeNode get last =>
-      sortOrder == SortOrder.ascending ? _last : _first;
+  RenderSortTreeNode get last => sortOrder == SortOrder.ascending ? _last : _first;
 
   bool get isEmpty => _length == 0;
 
@@ -271,6 +316,8 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
         _first = node;
         _last = node;
       } else {
+        sort();
+
         node._parentNode = owner;
 
         var currentNode = _first;
@@ -288,34 +335,10 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
         previousNode?._nextSibling = node;
 
         node.sortCode.subscribe(this, (newValue, oldValue) {
-          if (newValue < oldValue && node != _first) {
-            var currentNode = node._previousSibling;
-
-            while (currentNode._previousSibling != null &&
-                currentNode.sortCode.value >= node.sortCode.value) {
-              currentNode = currentNode._previousSibling;
-            }
-
-            final nextNode = currentNode._nextSibling;
-
-            currentNode._nextSibling = node;
-            node._previousSibling = currentNode;
-            node._nextSibling = nextNode;
-            nextNode?._previousSibling = node;
-          } else if (newValue > oldValue && node != _last) {
-            var currentNode = node._nextSibling;
-
-            while (currentNode._nextSibling != null &&
-                currentNode.sortCode.value <= node.sortCode.value) {
-              currentNode = currentNode._nextSibling;
-            }
-
-            final previousNode = currentNode._previousSibling;
-
-            currentNode._previousSibling = node;
-            node._nextSibling = currentNode;
-            node._previousSibling = previousNode;
-            previousNode?._nextSibling = node;
+          if (newValue < oldValue) {
+            _needHeadShift.add(node);
+          } else if (newValue > oldValue) {
+            _needTailShift.add(node);
           }
         });
       }
@@ -351,10 +374,58 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
       _length--;
 
       node.sortCode.unsubscribe(this);
+      _needHeadShift.remove(node);
+      _needTailShift.remove(node);
 
       return true;
     } else {
       return false;
+    }
+  }
+
+  void sort() {
+    if (_needHeadShift.isNotEmpty) {
+      for (var node in _needHeadShift) {
+        if (node != _first) {
+          var currentNode = node._previousSibling;
+
+          while (currentNode._previousSibling != null &&
+              currentNode.sortCode.value >= node.sortCode.value) {
+            currentNode = currentNode._previousSibling;
+          }
+
+          final nextNode = currentNode._nextSibling;
+
+          currentNode._nextSibling = node;
+          node._previousSibling = currentNode;
+          node._nextSibling = nextNode;
+          nextNode?._previousSibling = node;
+        }
+      }
+
+      _needHeadShift.clear();
+    }
+
+    if (_needTailShift.isNotEmpty) {
+      for (var node in _needTailShift) {
+        if (node != last) {
+          var currentNode = node._nextSibling;
+
+          while (currentNode._nextSibling != null &&
+              currentNode.sortCode.value <= node.sortCode.value) {
+            currentNode = currentNode._nextSibling;
+          }
+
+          final previousNode = currentNode._previousSibling;
+
+          currentNode._previousSibling = node;
+          node._nextSibling = currentNode;
+          node._previousSibling = previousNode;
+          previousNode?._nextSibling = node;
+        }
+      }
+
+      _needTailShift.clear();
     }
   }
 }
@@ -436,6 +507,8 @@ class UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
       return false;
     }
   }
+
+  void sort() {}
 }
 
 class _ChildNodeIterator implements Iterator<RenderSortTreeNode> {

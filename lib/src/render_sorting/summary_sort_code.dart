@@ -16,6 +16,10 @@ abstract class SummarySortCode extends ObservableValue<num> {
   /// Returns `true` when the [summarizedSortCodes] contained the [sortCode],
   /// return `false` otherwise.
   bool remove(ObservableValue<num> sortCode);
+
+  /// Returns a new copy of the current instance that does not yet contain
+  /// any sort codes.
+  SummarySortCode asEmpty();
 }
 
 abstract class _SummarySortCodeBase extends ObservableValue<num>
@@ -49,6 +53,8 @@ class StaticSortCode extends _SummarySortCodeBase {
 
   bool remove(ObservableValue<num> sortCode) =>
       _summarizedSortCodes.remove(sortCode);
+
+  StaticSortCode asEmpty() => new StaticSortCode(value);
 }
 
 /// A [SummarySortCode] that summarized a set of sort codes as their minimum
@@ -69,6 +75,8 @@ class MinSortCode extends _SummarySortCodeBase {
       }
     });
   }
+
+  MinSortCode asEmpty() => new MinSortCode();
 }
 
 /// A [SummarySortCode] that summarized a set of sort codes as their maximum
@@ -89,4 +97,6 @@ class MaxSortCode extends _SummarySortCodeBase {
       }
     });
   }
+
+  MaxSortCode asEmpty() => new MaxSortCode();
 }
