@@ -11,7 +11,7 @@ class PerspectiveCamera implements Camera {
 
   double _far;
 
-  Vector4 _position = new Vector4(0.0, 0.0, 0.0, 1.0);
+  Vector3 _position = new Vector3(0.0, 0.0, 0.0);
 
   Quaternion _viewDirection = new Quaternion(0.0, 0.0, 0.0, 1.0);
 
@@ -88,9 +88,9 @@ class PerspectiveCamera implements Camera {
     _viewProjectionTransform = null;
   }
 
-  Vector4 get position => _position;
+  Vector3 get position => _position;
 
-  void set position(Vector4 value) {
+  void set position(Vector3 value) {
     _position = value;
     _translationMatrix = new Matrix4.translation(value.x, value.y, value.z);
     _viewTransform = null;

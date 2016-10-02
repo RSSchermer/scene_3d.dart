@@ -1,4 +1,4 @@
-part of rendering;
+part of bagl_forward_rendering;
 
 class ProgramPool {
   final Map<String, Program> _codePrograms = {};
@@ -20,9 +20,10 @@ class ProgramPool {
   void release(Program program) {
     if ((_programReferenceCounts[program] ?? 0) > 1) {
       _programReferenceCounts[program]--;
-    } else {
+    } else if (program != null) {
       _programReferenceCounts.remove(program);
-      _codePrograms.remove(program.vertexShaderSource + program.fragmentShaderSource);
+      _codePrograms
+          .remove(program.vertexShaderSource + program.fragmentShaderSource);
     }
   }
 }

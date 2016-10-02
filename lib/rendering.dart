@@ -23,7 +23,7 @@ part 'src/rendering/constant_material.dart';
 part 'src/rendering/lambert_material.dart';
 part 'src/rendering/null_view.dart';
 part 'src/rendering/program_material.dart';
-part 'src/rendering/program_pool.dart';
+part 'package:scene_3d/src/bagl_forward_rendering/program_pool.dart';
 part 'src/rendering/scene_renderer.dart';
 part 'src/rendering/type_grouped_view_set.dart';
 part 'src/rendering/view.dart';

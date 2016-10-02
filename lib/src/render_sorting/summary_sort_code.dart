@@ -24,7 +24,7 @@ abstract class SummarySortCode extends ObservableValue<num> {
 
 abstract class _SummarySortCodeBase extends ObservableValue<num>
     implements SummarySortCode {
-  Set<ObservableValue<num>> _summarizedSortCodes;
+  final Set<ObservableValue<num>> _summarizedSortCodes = new Set();
 
   Iterable<ObservableValue<num>> get summarizedSortCodes =>
       _summarizedSortCodes;

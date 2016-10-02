@@ -20,8 +20,8 @@ class SortedRenderBin extends SetBase<AtomicRenderUnit> implements Set<AtomicRen
 
     // Set up branch for translucent render units
     makeTranslucentUnitNode(AtomicRenderUnit renderUnit) {
-      if (renderUnit is DistanceSortable) {
-        return new RenderUnitNode(renderUnit, renderUnit.distance);
+      if (renderUnit is SquaredDistanceSortable) {
+        return new RenderUnitNode(renderUnit, renderUnit.squaredDistance);
       } else {
         return new RenderUnitNode(renderUnit, new ObservableValue(0));
       }
@@ -68,7 +68,7 @@ class SortedRenderBin extends SetBase<AtomicRenderUnit> implements Set<AtomicRen
       if (node != null) {
         _renderUnitsNodes.remove(value);
 
-        return node.release();
+        return node.disconnect();
       } else {
         return false;
       }
@@ -92,7 +92,7 @@ class _RenderTreeLeafIterator
 
   _RenderTreeLeafIterator(this.rootNode) {
     _currentNode = rootNode;
-    rootNode.sort();
+    rootNode.sortTree();
   }
 
   RenderUnitNode get current => _currentNode;
@@ -100,7 +100,7 @@ class _RenderTreeLeafIterator
   bool moveNext() {
     _currentNode.accept(this);
 
-    return _terminated;
+    return !_terminated;
   }
 
   void visitRenderUnitNode(RenderUnitNode node) {

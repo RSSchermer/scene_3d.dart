@@ -49,12 +49,12 @@ abstract class RenderSortTreeNode {
   /// Accepts a visit from the [visitor].
   void accept(RenderTreeVisitor visitor);
 
-  /// Releases this [RenderUnitNode] from the tree.
+  /// Disconnects this [RenderUnitNode] from the tree.
   ///
   /// Leaves the node parentless and without siblings; a root node. Returns
-  /// `true` if the node was released successfully, returns `false` if the node
-  /// was already parentless or could not be released from its parent.
-  bool release();
+  /// `true` if the node was disconnected successfully, returns `false` if the
+  /// node was already parentless or could not be released from its parent.
+  bool disconnect();
 
   /// Updates the node order of the tree represented by this
   /// [RenderSortTreeNode] to reflect the current state of its
@@ -67,7 +67,7 @@ abstract class RenderSortTreeNode {
   /// order. Calling this method reprocess [AtomicRenderUnit]s down different
   /// branches as necessary and updates the order of the branches to once again
   /// reflect the expected order.
-  void sort();
+  void sortTree();
 
   /// Returns a new copy of the subtree represented by this
   /// [RenderSortTreeNode].
@@ -106,7 +106,7 @@ abstract class BranchingNode extends RenderSortTreeNode {
   /// values on the [renderUnitNode] or its [AtomicRenderUnit].
   void cancelSubscriptions(RenderUnitNode renderUnitNode);
 
-  bool release() {
+  bool disconnect() {
     if (parentNode != null) {
       return parentNode.removeChild(this);
     } else {
@@ -129,7 +129,7 @@ class RenderUnitNode extends RenderSortTreeNode {
     visitor.visitRenderUnitNode(this);
   }
 
-  bool release() {
+  bool disconnect() {
     var node = parentNode;
 
     while (node != null) {
@@ -164,7 +164,7 @@ class RenderUnitNode extends RenderSortTreeNode {
     reentryNode.process(renderUnit);
   }
 
-  void sort() {}
+  void sortTree() {}
 
   RenderUnitNode toRenderSortTree() => new RenderUnitNode(renderUnit, sortCode);
 }
@@ -209,12 +209,16 @@ class RenderUnitGroupNode extends BranchingNode {
       sortCode.remove(childNode.sortCode);
     }
 
+    if (_children.isEmpty) {
+      disconnect();
+    }
+
     return success;
   }
 
   void cancelSubscriptions(RenderUnitNode renderUnitNode) {}
 
-  void sort() {
+  void sortTree() {
     _children.sort();
   }
 
@@ -292,13 +296,13 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
 
   int _length = 0;
 
-  RenderSortTreeNode _first;
+  RenderSortTreeNode _initial;
 
-  RenderSortTreeNode _last;
+  RenderSortTreeNode _final;
 
-  RenderSortTreeNode get first => sortOrder == SortOrder.ascending ? _first : _last;
+  RenderSortTreeNode get first => sortOrder == SortOrder.ascending ? _initial : _final;
 
-  RenderSortTreeNode get last => sortOrder == SortOrder.ascending ? _last : _first;
+  RenderSortTreeNode get last => sortOrder == SortOrder.ascending ? _final : _initial;
 
   bool get isEmpty => _length == 0;
 
@@ -312,15 +316,15 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
 
   void add(RenderSortTreeNode node) {
     if (node.parentNode == null) {
+      node._parentNode = owner;
+
       if (isEmpty) {
-        _first = node;
-        _last = node;
+        _initial = node;
+        _final = node;
       } else {
         sort();
 
-        node._parentNode = owner;
-
-        var currentNode = _first;
+        var currentNode = _initial;
 
         while (currentNode._nextSibling != null &&
             currentNode.sortCode.value <= node.sortCode.value) {
@@ -359,12 +363,12 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
       previous?._nextSibling = next;
       next?._previousSibling = previous;
 
-      if (node == _first) {
-        _first = node._nextSibling;
+      if (node == _initial) {
+        _initial = node._nextSibling;
       }
 
-      if (node == _last) {
-        _last = node._previousSibling;
+      if (node == _final) {
+        _final = node._previousSibling;
       }
 
       node._parentNode = null;
@@ -386,7 +390,7 @@ class SortedChildNodes extends IterableBase<RenderSortTreeNode>
   void sort() {
     if (_needHeadShift.isNotEmpty) {
       for (var node in _needHeadShift) {
-        if (node != _first) {
+        if (node != _initial) {
           var currentNode = node._previousSibling;
 
           while (currentNode._previousSibling != null &&
@@ -461,12 +465,12 @@ class UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
 
   void add(RenderSortTreeNode node) {
     if (node.parentNode == null) {
+      node._parentNode = owner;
+
       if (isEmpty) {
         _initial = node;
         _final = node;
       } else {
-        node._parentNode = owner;
-
         _final._nextSibling = node;
         node._previousSibling = _final;
         node._nextSibling = null;
@@ -501,6 +505,8 @@ class UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
       node._parentNode = null;
       node._previousSibling = null;
       node._nextSibling = null;
+
+      _length--;
 
       return true;
     } else {

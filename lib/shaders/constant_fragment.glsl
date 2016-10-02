@@ -2,30 +2,34 @@ precision mediump float;
 
 varying vec2 vTexCoord;
 
-uniform vec3 uEmissionColor;
-uniform sampler2D uEmissionMapSampler;
-uniform bool uHasEmissionMap;
+#ifdef USE_EMISSION_MAP
+  uniform sampler2D uEmissionMapSampler;
+#else
+  uniform vec3 uEmissionColor;
+#endif
 
-uniform float uTransparency;
-uniform sampler2D uTransparencyMapSampler;
-uniform bool uHasTransparencyMap;
+#ifdef USE_TRANSPARENCY_MAP
+  uniform sampler2D uTransparencyMapSampler;
+#else
+  uniform float uTransparency;
+#endif
 
 void main(void) {
   vec3 colorRGB;
 
-  if (uHasEmissionMap) {
+  #ifdef USE_EMISSION_MAP
     colorRGB = texture2D(uEmissionMapSampler, vTexCoord).rgb;
-  } else {
+  #else
     colorRGB = uEmissionColor;
-  }
+  #endif
 
   float colorAlpha;
 
-  if (uHasTransparencyMap) {
+  #ifdef USE_TRANSPARENCY_MAP
     colorAlpha = 1.0 - texture2D(uTransparencyMapSampler, vTexCoord).a;
-  } else {
+  #else
     colorAlpha = 1.0 - uTransparency;
-  }
+  #endif
 
   gl_FragColor = vec4(colorRGB, colorAlpha);
 }

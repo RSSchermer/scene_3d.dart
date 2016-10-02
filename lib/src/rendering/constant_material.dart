@@ -10,8 +10,8 @@ class ConstantTrianglesShapeRenderer {
   final Scene scene;
 
   final Program _program = new Program(
-      INLINE_ASSET('../../shaders/constant_material_vertex.glsl'),
-      INLINE_ASSET('../../shaders/constant_material_fragment.glsl'));
+      INLINE_ASSET('../../shaders/constant_vertex.glsl'),
+      INLINE_ASSET('../../shaders/constant_fragment.glsl'));
 
   final Expando<Sampler2D> textureSampler2D = new Expando();
 
@@ -72,9 +72,9 @@ class ConstantTrianglesShapeView implements View {
   /// The [ConstantTrianglesShape] for which this is a [View].
   final ConstantTrianglesShape shape;
 
-  static final String vertexShaderSource = INLINE_ASSET('../../shaders/constant_material_vertex.glsl');
+  static final String vertexShaderSource = INLINE_ASSET('../../shaders/constant_vertex.glsl');
 
-  static final String fragmentShaderSource = INLINE_ASSET('../../shaders/constant_material_fragment.glsl');
+  static final String fragmentShaderSource = INLINE_ASSET('../../shaders/constant_fragment.glsl');
 
   final ConstantMaterial _material;
 

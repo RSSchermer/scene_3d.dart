@@ -46,7 +46,7 @@ class ProgramBranchingNode extends BranchingNode {
 
 
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
-    if (renderUnit is ProgramGroupable) {
+    if (renderUnit is ProgramGroupable && renderUnit.program.value != null) {
       final program = renderUnit.program.value;
       var targetChild = _programsBranches[program];
 
@@ -100,7 +100,7 @@ class ProgramBranchingNode extends BranchingNode {
     }
   }
 
-  void sort() {
+  void sortTree() {
     for (var node in _needReprocessing) {
       node.reprocess(this);
     }
@@ -108,7 +108,7 @@ class ProgramBranchingNode extends BranchingNode {
     _needReprocessing.clear();
 
     for (var child in children) {
-      child.sort();
+      child.sortTree();
     }
 
     _children.sort();

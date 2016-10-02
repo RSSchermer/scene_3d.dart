@@ -5,9 +5,9 @@ abstract class Camera {
   String name;
 
   /// The position of this [Camera] in world space.
-  Vector4 get position;
+  Vector3 get position;
 
-  void set position(Vector4 position);
+  void set position(Vector3 position);
 
   /// A [Quaternion] representing the orientation of this [Camera]'s view
   /// direction in world space.

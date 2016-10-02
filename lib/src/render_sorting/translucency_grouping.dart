@@ -53,7 +53,7 @@ class TranslucencyBranchingNode extends BranchingNode {
 
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
     if (renderUnit is TranslucencyGroupable) {
-      var terminalNode = renderUnit.isTranslucent.value
+      var terminalNode = (renderUnit.isTranslucent.value ?? false)
           ? translucentBranch.process(renderUnit)
           : opaqueBranch.process(renderUnit);
 
@@ -78,13 +78,13 @@ class TranslucencyBranchingNode extends BranchingNode {
     }
   }
 
-  void sort() {
+  void sortTree() {
     for (var node in _needReprocessing) {
       node.reprocess(this);
     }
 
     for (var child in children) {
-      child.sort();
+      child.sortTree();
     }
 
     _needReprocessing.clear();
