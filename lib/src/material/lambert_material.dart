@@ -5,21 +5,21 @@ class LambertMaterial implements Material {
 
   Blending blending;
 
-  DepthTest depthTest;
+  DepthTest depthTest = const DepthTest();
 
   StencilTest stencilTest;
 
   CullingMode faceCulling;
 
-  Vector3 diffuseColor;
+  Vector3 diffuseColor = new Vector3(0.5, 0.5, 0.5);
 
   Texture2D diffuseMap;
 
-  Vector3 emissionColor;
+  Vector3 emissionColor = new Vector3.zero();
 
   Texture2D emissionMap;
 
-  double transparency;
+  double transparency = 0.0;
 
   Texture2D transparencyMap;
 

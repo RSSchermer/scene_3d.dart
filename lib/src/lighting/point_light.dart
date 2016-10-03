@@ -3,20 +3,15 @@ part of lighting;
 class PointLight implements Light, Struct {
   String name;
 
-  Vector3 position;
+  Vector3 position = new Vector3(0.0, 0.0, 0.0);
 
-  Vector3 color;
+  Vector3 color = new Vector3(1.0, 1.0, 1.0);
 
-  double constantAttenuation;
+  double constantAttenuation = 1.0;
 
-  double linearAttenuation;
+  double linearAttenuation = 0.0;
 
-  double quadraticAttenuation;
-
-  PointLight(this.position, this.color,
-      {this.constantAttenuation: 1.0,
-      this.linearAttenuation: 0.0,
-      this.quadraticAttenuation: 0.0});
+  double quadraticAttenuation = 0.0;
 
   Iterable<String> get members => const [
         'position',
@@ -26,8 +21,8 @@ class PointLight implements Light, Struct {
         'quadraticAttenuation'
       ];
 
-  bool hasMember(String name) =>
-      members.contains(name);
+  bool hasMember(String member) =>
+      members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
     f('position', position);

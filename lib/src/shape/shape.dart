@@ -25,6 +25,8 @@ abstract class MaterialShadedPrimitivesShape {
 
   Matrix4 _worldTransform;
 
+  Matrix3 _normalTransform;
+
   /// The sequence of geometric primitives that makes up this
   /// [MaterialShadedPrimitivesShape].
   IndexGeometry get primitives;
@@ -48,6 +50,7 @@ abstract class MaterialShadedPrimitivesShape {
     _rotation = value;
     _rotationTransform = null;
     _worldTransform = null;
+    _normalTransform = null;
   }
 
   /// The scale of this [MaterialShadedPrimitivesShape] in a [Scene].
@@ -57,6 +60,7 @@ abstract class MaterialShadedPrimitivesShape {
     _scale = value;
     _scaleTransform = null;
     _worldTransform = null;
+    _normalTransform = null;
   }
 
   /// Matrix that transforms coordinates local to this
@@ -80,6 +84,26 @@ abstract class MaterialShadedPrimitivesShape {
         _positionTransform * _scaleTransform * _rotationTransform;
 
     return _worldTransform;
+  }
+
+  Matrix3 get normalTransform {
+    if (_normalTransform == null) {
+      final w = worldTransform;
+      final m = new Matrix3(
+          w.r0c0,
+          w.r0c1,
+          w.r0c2,
+          w.r1c0,
+          w.r1c1,
+          w.r1c2,
+          w.r2c0,
+          w.r2c1,
+          w.r2c2);
+
+      _normalTransform = m.inverse.transpose;
+    }
+
+    return _normalTransform;
   }
 }
 

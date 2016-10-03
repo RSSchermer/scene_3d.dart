@@ -17,10 +17,13 @@ class ForwardRenderer {
       final frame = context.defaultFrame;
       final constantViewFactory =
           new ConstantShapeViewFactory(frame, programPool);
+      final lambertViewFactory =
+          new LambertShapeViewFactory(frame, programPool);
       final lightViewFactory = new NullViewFactory((o) => o is Light);
       final cameraViewFactory = new NullViewFactory((o) => o is Camera);
 
-      constantViewFactory.nextFactory = lightViewFactory;
+      constantViewFactory.nextFactory = lambertViewFactory;
+      lambertViewFactory.nextFactory = lightViewFactory;
       lightViewFactory.nextFactory = cameraViewFactory;
 
       viewFactory = constantViewFactory;

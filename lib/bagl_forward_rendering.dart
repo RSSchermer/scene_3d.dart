@@ -19,7 +19,7 @@ part 'src/bagl_forward_rendering/bagl_render_unit.dart';
 part 'src/bagl_forward_rendering/bagl_forward_renderer.dart';
 part 'src/bagl_forward_rendering/blinn_rendering.dart';
 part 'src/bagl_forward_rendering/constant_shape_rendering.dart';
-part 'src/bagl_forward_rendering/lambert_rendering.dart';
+part 'src/bagl_forward_rendering/lambert_shape_rendering.dart';
 part 'src/bagl_forward_rendering/null_view.dart';
 part 'src/bagl_forward_rendering/object_views.dart';
 part 'src/bagl_forward_rendering/phong_rendering.dart';

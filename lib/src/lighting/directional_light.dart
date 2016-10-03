@@ -3,16 +3,14 @@ part of lighting;
 class DirectionalLight implements Light, Struct {
   String name;
 
-  Vector3 color;
+  Vector3 color = new Vector3(1.0, 1.0, 1.0);
 
-  Vector3 direction;
+  Vector3 direction = new Vector3(1.0, 0.0, 0.0);
 
-  DirectionalLight(this.color, this.direction);
+  Iterable<String> get members => const ['color', 'direction'];
 
-  Iterable<String> get members => const ['color', 'orientation'];
-
-  bool hasMember(String name) =>
-      members.contains(name);
+  bool hasMember(String member) =>
+      members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
     f('color', color);
