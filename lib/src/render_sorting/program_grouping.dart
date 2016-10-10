@@ -44,7 +44,6 @@ class ProgramBranchingNode extends BranchingNode {
 
   Iterable<RenderSortTreeNode> get children => _children;
 
-
   RenderUnitNode process(AtomicRenderUnit renderUnit) {
     if (renderUnit is ProgramGroupable && renderUnit.program.value != null) {
       final program = renderUnit.program.value;
@@ -116,7 +115,8 @@ class ProgramBranchingNode extends BranchingNode {
 
   ProgramBranchingNode toRenderSortTree() {
     final newSortCode = sortCode.asEmpty();
-    final result = new ProgramBranchingNode(newSortCode, makeChildNode, sortOrder: _children.sortOrder);
+    final result = new ProgramBranchingNode(newSortCode, makeChildNode,
+        sortOrder: _children.sortOrder);
 
     _programsBranches.forEach((program, branch) {
       final newBranch = branch.toRenderSortTree();

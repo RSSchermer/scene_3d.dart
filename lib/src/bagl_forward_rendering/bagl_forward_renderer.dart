@@ -5,7 +5,7 @@ class ForwardRenderer {
 
   final Scene scene;
 
-  final ViewSet _views = new ViewSet(new SortedRenderBin.defaultSorting());
+  final ViewSet _views = new ViewSet(new RenderSortTreeUnits.defaultSorting());
 
   final Map<Object, ObjectView> _objectViews = {};
 

@@ -7,7 +7,7 @@ class SpotLight implements Light, Struct {
 
   Vector3 color = new Vector3(1.0, 1.0, 1.0);
 
-  Vector3 direction = new Vector3(1.0, 0.0, 0.0);
+  Vector3 direction = new Vector3(0.0, -1.0, 0.0);
 
   double constantAttenuation = 1.0;
 
@@ -22,7 +22,7 @@ class SpotLight implements Light, Struct {
   Iterable<String> get members => const [
     'position',
     'color',
-    'direction'
+    'direction',
     'constantAttenuation',
     'linearAttenuation',
     'quadraticAttenuation',

@@ -19,7 +19,7 @@ main() {
   var shape = new LambertTrianglesShape(triangles, material)
     ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
   var light = new DirectionalLight()
-    ..direction = new Vector3(0.0, -1.0, 0.0);
+    ..direction = new Vector3(0.0, 0.0, 1.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
     ..position = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();

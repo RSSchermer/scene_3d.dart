@@ -93,7 +93,8 @@ class TranslucencyBranchingNode extends BranchingNode {
   TranslucencyBranchingNode toRenderSortTree() {
     final newOpaqueBranch = opaqueBranch.toRenderSortTree();
     final newTranslucentBranch = translucentBranch.toRenderSortTree();
-    final result = new TranslucencyBranchingNode(newOpaqueBranch, newTranslucentBranch, sortCode);
+    final result = new TranslucencyBranchingNode(
+        newOpaqueBranch, newTranslucentBranch, sortCode);
 
     final iterator = new _RenderTreeLeafIterator(result);
 

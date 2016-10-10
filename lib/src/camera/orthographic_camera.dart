@@ -67,6 +67,11 @@ class OrthographicCamera implements Camera {
       throw new ArgumentError('The near distance must be greater than 0.');
     }
 
+    if (value >= far) {
+      throw new ArgumentError('The near distance must be smaller than the far '
+          'distance.');
+    }
+
     _near = value;
     _projectionTransform = null;
     _viewProjectionTransform = null;
@@ -115,7 +120,7 @@ class OrthographicCamera implements Camera {
   }
 
   Matrix4 get projectionTransform {
-    if (projectionTransform == null) {
+    if (_projectionTransform == null) {
       final h = magnificationHorizontal;
       final v = magnificationVertical;
 
