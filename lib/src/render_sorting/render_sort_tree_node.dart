@@ -183,11 +183,11 @@ class RenderUnitGroupNode extends BranchingNode {
   RenderUnitGroupNode(this.sortCode, this.makeRenderUnitNode,
       {SortOrder sortOrder: SortOrder.unsorted}) {
     if (sortOrder == SortOrder.ascending) {
-      _children = new SortedChildNodes.ascending(this);
+      _children = new ChildNodes.ascending(this);
     } else if (sortOrder == SortOrder.descending) {
-      _children = new SortedChildNodes.descending(this);
+      _children = new ChildNodes.descending(this);
     } else {
-      _children = new UnsortedChildNodes(this);
+      _children = new ChildNodes.unsorted(this);
     }
   }
 
@@ -315,9 +315,7 @@ class _RenderUnitIterator implements Iterator<AtomicRenderUnit> {
 
   _RenderUnitIterator(this.leafIterator);
 
-  AtomicRenderUnit get current {
-    return leafIterator.current.renderUnit;
-  }
+  AtomicRenderUnit get current => leafIterator.current.renderUnit;
 
   bool moveNext() => leafIterator.moveNext();
 }

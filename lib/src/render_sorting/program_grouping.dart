@@ -34,11 +34,11 @@ class ProgramBranchingNode extends BranchingNode {
   ProgramBranchingNode(this.sortCode, this.makeChildNode,
       {SortOrder sortOrder: SortOrder.unsorted}) {
     if (sortOrder == SortOrder.ascending) {
-      _children = new SortedChildNodes.ascending(this);
+      _children = new ChildNodes.ascending(this);
     } else if (sortOrder == SortOrder.descending) {
-      _children = new SortedChildNodes.descending(this);
+      _children = new ChildNodes.descending(this);
     } else {
-      _children = new UnsortedChildNodes(this);
+      _children = new ChildNodes.unsorted(this);
     }
   }
 

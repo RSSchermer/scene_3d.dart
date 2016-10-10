@@ -63,11 +63,6 @@ void main() {
       });
 
       test('iterator returns an iterator that returns the correct current value on each iteration', () {
-        print(units.map((u) => u != null ? u.id : 0).toList());
-        print(translucentBranch.children.toList());
-        print(translucentBranch.children.first.previousSibling);
-        print(translucentBranch.children.last.nextSibling);
-
         final iterator = units.iterator;
         final seen = [];
 
@@ -78,74 +73,72 @@ void main() {
         expect(seen, orderedEquals([unit2, unit5, unit3, unit1, unit4]));
       });
 
-//      group('after changing an observable value used as for grouping', () {
-//        setUp(() {
-//          unit1.isTranslucent.value = false;
-//        });
-//
-//        tearDown(() {
-//          unit1.isTranslucent.value = true;
-//        });
-//
-//        test('the iteration order is updated correctly', () {
-//          print(units.toList().map((u) => u != null ? u.id : 0));
-//
-//          final iterator = units.iterator;
-//          final seen = [];
-//
-//          while (iterator.moveNext()) {
-//            seen.add(iterator.current);
-//          }
-//
-//          expect(seen, orderedEquals([unit2, unit5, unit1, unit3, unit4]));
-//        });
-//      });
-//
-//      group('after changing an observable value used for sorting', () {
-//        setUp(() {
-//          unit4.squaredDistance.value = 5.0;
-//        });
-//
-//        tearDown(() {
-//          unit4.squaredDistance.value = 1.0;
-//        });
-//
-//        test('the iteration order is updated correctly', () {
-//          final iterator = units.iterator;
-//          final seen = [];
-//
-//          while (iterator.moveNext()) {
-//            seen.add(iterator.current);
-//          }
-//
-//          expect(seen, orderedEquals([unit2, unit5, unit3, unit4, unit1]));
-//        });
-//      });
-//
-//      group('after removing a render unit', () {
-//        setUp(() {
-//          units.remove(unit3);
-//        });
-//
-//        tearDown(() {
-//          units.add(unit3);
-//        });
-//
-//        test('length returns 4', () {
-//          expect(units.length, equals(4));
-//        });
-//
-//        test('iterator returns an iterator that returns the correct current value on each iteration', () {
-//          final iterator = units.iterator;
-//          final seen = [];
-//
-//          while (iterator.moveNext()) {
-//            seen.add(iterator.current);
-//          }
-//
-//          expect(seen, orderedEquals([unit2, unit5, unit1, unit4]));
-//        });
-//      });
+      group('after changing an observable value used as for grouping', () {
+        setUp(() {
+          unit1.isTranslucent.value = false;
+        });
+
+        tearDown(() {
+          unit1.isTranslucent.value = true;
+        });
+
+        test('the iteration order is updated correctly', () {
+          final iterator = units.iterator;
+          final seen = [];
+
+          while (iterator.moveNext()) {
+            seen.add(iterator.current);
+          }
+
+          expect(seen, orderedEquals([unit2, unit5, unit1, unit3, unit4]));
+        });
+      });
+
+      group('after changing an observable value used for sorting', () {
+        setUp(() {
+          unit4.squaredDistance.value = 5.0;
+        });
+
+        tearDown(() {
+          unit4.squaredDistance.value = 1.0;
+        });
+
+        test('the iteration order is updated correctly', () {
+          final iterator = units.iterator;
+          final seen = [];
+
+          while (iterator.moveNext()) {
+            seen.add(iterator.current);
+          }
+
+          expect(seen, orderedEquals([unit2, unit5, unit3, unit4, unit1]));
+        });
+      });
+
+      group('after removing a render unit', () {
+        setUp(() {
+          units.remove(unit3);
+        });
+
+        tearDown(() {
+          units.add(unit3);
+        });
+
+        test('length returns 4', () {
+          expect(units.length, equals(4));
+        });
+
+        test('iterator returns an iterator that returns the correct current value on each iteration', () {
+          final iterator = units.iterator;
+          final seen = [];
+
+          while (iterator.moveNext()) {
+            seen.add(iterator.current);
+          }
+
+          expect(seen, orderedEquals([unit2, unit5, unit1, unit4]));
+        });
+      });
     });
   });
 }
