@@ -25,7 +25,7 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
 
   Texture2D _activeEmissionMap;
 
-  Texture2D _activeTransparencyMap;
+  Texture2D _activeOpacityMap;
 
   bool _programNeedsUpdate = true;
 
@@ -60,28 +60,25 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
       _uniforms['uEmissionColor'] = material.emissionColor;
     }
 
-    final transparencyMap = material.transparencyMap;
+    final opacityMap = material.opacityMap;
 
-    if (transparencyMap != _activeTransparencyMap) {
-      if (transparencyMap == null) {
-        _uniforms.remove('uTransparencyMapSampler');
+    if (opacityMap != _activeOpacityMap) {
+      if (opacityMap == null) {
+        _uniforms.remove('uOpacityMapSampler');
 
         _programNeedsUpdate = true;
       } else {
-        _uniforms.remove('uTransparency');
-        _uniforms['uTransparencyMapSampler'] = new Sampler2D(transparencyMap);
+        _uniforms['uOpacityMapSampler'] = new Sampler2D(opacityMap);
 
-        if (_activeTransparencyMap == null) {
+        if (_activeOpacityMap == null) {
           _programNeedsUpdate = true;
         }
       }
 
-      _activeTransparencyMap = transparencyMap;
+      _activeOpacityMap = opacityMap;
     }
 
-    if (_activeTransparencyMap == null) {
-      _uniforms['uTransparency'] = material.transparency;
-    }
+    _uniforms['uOpacity'] = material.opacity;
 
     if (_programNeedsUpdate) {
       var defines = '';
@@ -90,8 +87,8 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
         defines += '#define USE_EMISSION_MAP\n';
       }
 
-      if (_activeTransparencyMap != null) {
-        defines += '#define USE_TRANSPARENCY_MAP\n';
+      if (_activeOpacityMap != null) {
+        defines += '#define USE_OPACITY_MAP\n';
       }
 
       programPool.release(program.value);
@@ -103,22 +100,24 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
       _programNeedsUpdate = false;
     }
 
-    isTranslucent.value = material.transparency > 0.0;
+    isTranslucent.value = material.opacity < 1.0;
     squaredDistance.value = squaredDistance3(shape.position, camera.position);
   }
 
   void render() {
     final material = shape.material;
 
-    frame.draw(shape.primitives, program.value, _uniforms,
-        blending: material.blending,
-        depthTest: material.depthTest,
-        stencilTest: material.stencilTest,
-        faceCulling: material.faceCulling,
-        attributeNameMap: const {
-          'aPosition': 'position',
-          'aTexCoord': 'texCoord'
-        });
+    if (material.opacity > 0.05) {
+      frame.draw(shape.primitives, program.value, _uniforms,
+          blending: material.blending,
+          depthTest: material.depthTest,
+          stencilTest: material.stencilTest,
+          faceCulling: material.faceCulling,
+          attributeNameMap: const {
+            'aPosition': 'position',
+            'aTexCoord': 'texCoord'
+          });
+    }
   }
 }
 

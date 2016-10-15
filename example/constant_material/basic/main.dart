@@ -14,8 +14,7 @@ import 'package:scene_3d/shape.dart';
 main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new ConstantMaterial()
-    ..emissionColor = new Vector3(1.0, 0.0, 0.0)
-    ..emissionMap = new Texture2D.fromImageURL('checkerboard_color_gradient.png');
+    ..emissionColor = new Vector3(1.0, 0.0, 0.0);
   var shape = new ConstantTrianglesShape(triangles, material)
     ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
@@ -27,7 +26,13 @@ main() {
   var canvas = document.querySelector('#main_canvas');
   var renderer = new ForwardRenderer(canvas, scene);
 
-  material.emissionMap.asFuture().whenComplete(() {
+  update(num time) {
+    shape.rotation = new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
+
     renderer.render(camera);
-  });
+
+    window.requestAnimationFrame(update);
+  }
+
+  window.requestAnimationFrame(update);
 }

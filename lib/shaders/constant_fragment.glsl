@@ -8,11 +8,11 @@ varying vec2 vTexCoord;
   uniform vec3 uEmissionColor;
 #endif
 
-#ifdef USE_TRANSPARENCY_MAP
-  uniform sampler2D uTransparencyMapSampler;
-#else
-  uniform float uTransparency;
+#ifdef USE_OPACITY_MAP
+  uniform sampler2D uOpacityMapSampler;
 #endif
+
+uniform float uOpacity;
 
 void main(void) {
   vec3 colorRGB;
@@ -23,13 +23,13 @@ void main(void) {
     colorRGB = uEmissionColor;
   #endif
 
-  float colorAlpha;
+  float colorAlpha = 1.0;
 
-  #ifdef USE_TRANSPARENCY_MAP
-    colorAlpha = 1.0 - texture2D(uTransparencyMapSampler, vTexCoord).a;
-  #else
-    colorAlpha = 1.0 - uTransparency;
+  #ifdef USE_OPACITY_MAP
+    colorAlpha *= texture2D(uOpacityMapSampler, vTexCoord).a;
   #endif
+
+  colorAlpha *= clamp(uOpacity, 0.0, 1.0);
 
   gl_FragColor = vec4(colorRGB, colorAlpha);
 }

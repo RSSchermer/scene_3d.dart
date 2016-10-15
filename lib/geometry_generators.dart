@@ -4,6 +4,35 @@ import 'package:bagl/index_geometry.dart';
 import 'package:bagl/math.dart';
 import 'package:bagl/vertex_data.dart';
 
+Triangles generateQuadTriangles(double width, double height) {
+  final halfWidth = width / 2;
+  final halfHeight = height / 2;
+
+  final pos0 = new Vector3(-halfWidth, halfHeight, 0.0);
+  final pos1 = new Vector3(-halfWidth, -halfHeight, 0.0);
+  final pos2 = new Vector3(halfWidth, -halfHeight, 0.0);
+  final pos3 = new Vector3(halfWidth, halfHeight, 0.0);
+
+  final attributeData = new AttributeDataTable.fromList(9, [
+    // position (vec4)                    normal (vec3)     texCoord (vec2)
+    pos0.x, pos0.y, pos0.z, 1.0,    0.0, 0.0, 1.0,    0.0, 0.0,
+    pos1.x, pos1.y, pos1.z, 1.0,    0.0, 0.0, 1.0,    0.0, 1.0,
+    pos3.x, pos3.y, pos3.z, 1.0,    0.0, 0.0, 1.0,    1.0, 0.0,
+
+    pos3.x, pos3.y, pos3.z, 1.0,    0.0, 0.0, 1.0,    1.0, 0.0,
+    pos1.x, pos1.y, pos1.z, 1.0,    0.0, 0.0, 1.0,    0.0, 1.0,
+    pos2.x, pos2.y, pos2.z, 1.0,    0.0, 0.0, 1.0,    1.0, 1.0,
+  ]);
+
+  final vertices = new VertexArray.fromAttributes({
+    'position': new Vector4Attribute(attributeData),
+    'normal': new Vector3Attribute(attributeData, offset: 4),
+    'texCoord': new Vector2Attribute(attributeData, offset: 7),
+  });
+
+  return new Triangles(vertices, new IndexList.incrementing(6));
+}
+
 Triangles generateBoxTriangles(double width, double height, double depth) {
   final halfWidth = width / 2;
   final halfHeight = height / 2;

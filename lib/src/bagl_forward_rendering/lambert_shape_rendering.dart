@@ -27,7 +27,7 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
   Texture2D _activeEmissionMap;
 
-  Texture2D _activeTransparencyMap;
+  Texture2D _activeOpacityMap;
 
   List<DirectionalLight> _directionalLights;
 
@@ -62,38 +62,35 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
           _directionalLights.add(object);
           _uniforms['uDirectionalLights'] = _directionalLights;
           _programNeedsUpdate = true;
-        } else if (object is SpotLight) {
-          _spotLights.add(object);
-          _uniforms['uSpotLights'] = _pointLights;
-          _programNeedsUpdate = true;
         } else if (object is PointLight) {
           _pointLights.add(object);
-          _uniforms['uPointLights'] = _spotLights;
+          _uniforms['uPointLights'] = _pointLights;
+          _programNeedsUpdate = true;
+        } else if (object is SpotLight) {
+          _spotLights.add(object);
+          _uniforms['uSpotLights'] = _spotLights;
           _programNeedsUpdate = true;
         }
       }
 
       for (var object in change.removals) {
         if (object is DirectionalLight) {
-          _directionalLights.remove(object);
-          _programNeedsUpdate = true;
+          _programNeedsUpdate = _directionalLights.remove(object);
 
           if (_directionalLights.isEmpty) {
             _uniforms.remove('uDirectionalLights');
           }
-        } else if (object is SpotLight) {
-          _spotLights.remove(object);
-          _programNeedsUpdate = true;
-
-          if (_directionalLights.isEmpty) {
-            _uniforms.remove('uSpotLights');
-          }
         } else if (object is PointLight) {
-          _pointLights.remove(object);
-          _programNeedsUpdate = true;
+          _programNeedsUpdate = _pointLights.remove(object);
 
-          if (_directionalLights.isEmpty) {
+          if (_pointLights.isEmpty) {
             _uniforms.remove('uPointLights');
+          }
+        } else if (object is SpotLight) {
+          _programNeedsUpdate = _spotLights.remove(object);
+
+          if (_spotLights.isEmpty) {
+            _uniforms.remove('uSpotLights');
           }
         }
       }
@@ -153,31 +150,30 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
       _uniforms['uEmissionColor'] = material.emissionColor;
     }
 
-    final transparencyMap = material.transparencyMap;
+    final opacityMap = material.opacityMap;
 
-    if (transparencyMap != _activeTransparencyMap) {
-      if (transparencyMap == null) {
-        _uniforms.remove('uTransparencyMapSampler');
+    if (opacityMap != _activeOpacityMap) {
+      if (opacityMap == null) {
+        _uniforms.remove('uOpacityMapSampler');
 
         _programNeedsUpdate = true;
       } else {
-        _uniforms.remove('uTransparency');
-        _uniforms['uTransparencyMapSampler'] = new Sampler2D(transparencyMap);
+        _uniforms['uOpacityMapSampler'] = new Sampler2D(opacityMap);
 
-        if (_activeTransparencyMap == null) {
+        if (_activeOpacityMap == null) {
           _programNeedsUpdate = true;
         }
       }
 
-      _activeTransparencyMap = transparencyMap;
+      _activeOpacityMap = opacityMap;
     }
 
-    if (_activeTransparencyMap == null) {
-      _uniforms['uTransparency'] = material.transparency;
-    }
+    _uniforms['uOpacity'] = material.opacity;
 
     if (_programNeedsUpdate) {
-      var defines = '#define NUM_DIRECTIONAL_LIGHTS ${_directionalLights.length}\n';
+      var defines =
+          '#define NUM_DIRECTIONAL_LIGHTS ${_directionalLights.length}\n'
+          '#define NUM_POINT_LIGHTS ${_pointLights.length}\n';
 
       if (_activeDiffuseMap != null) {
         defines += '#define USE_DIFFUSE_MAP\n';
@@ -187,8 +183,8 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
         defines += '#define USE_EMISSION_MAP\n';
       }
 
-      if (_activeTransparencyMap != null) {
-        defines += '#define USE_TRANSPARENCY_MAP\n';
+      if (_activeOpacityMap != null) {
+        defines += '#define USE_OPACITY_MAP\n';
       }
 
       programPool.release(program.value);
@@ -200,23 +196,25 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
       _programNeedsUpdate = false;
     }
 
-    isTranslucent.value = material.transparency > 0.0;
+    isTranslucent.value = material.opacity < 1.0;
     squaredDistance.value = squaredDistance3(shape.position, camera.position);
   }
 
   void render() {
     final material = shape.material;
 
-    frame.draw(shape.primitives, program.value, _uniforms,
-        blending: material.blending,
-        depthTest: material.depthTest,
-        stencilTest: material.stencilTest,
-        faceCulling: material.faceCulling,
-        attributeNameMap: const {
-          'aPosition': 'position',
-          'aNormal': 'normal',
-          'aTexCoord': 'texCoord'
-        });
+    if (material.opacity > 0.05) {
+      frame.draw(shape.primitives, program.value, _uniforms,
+          blending: material.blending,
+          depthTest: material.depthTest,
+          stencilTest: material.stencilTest,
+          faceCulling: material.faceCulling,
+          attributeNameMap: const {
+            'aPosition': 'position',
+            'aNormal': 'normal',
+            'aTexCoord': 'texCoord'
+          });
+    }
   }
 }
 

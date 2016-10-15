@@ -3,7 +3,9 @@ part of material;
 class LambertMaterial implements Material {
   String name;
 
-  Blending blending;
+  Blending blending = const Blending(
+      sourceColorFactor: BlendingFactor.sourceAlpha,
+      destinationColorFactor: BlendingFactor.oneMinusSourceAlpha);
 
   DepthTest depthTest = const DepthTest();
 
@@ -19,9 +21,9 @@ class LambertMaterial implements Material {
 
   Texture2D emissionMap;
 
-  double transparency = 0.0;
+  double opacity = 1.0;
 
-  Texture2D transparencyMap;
+  Texture2D opacityMap;
 
   Texture2D bumpMap;
 
