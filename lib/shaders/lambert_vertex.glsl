@@ -6,6 +6,8 @@ uniform mat4 uWorld;
 uniform mat4 uViewProjection;
 uniform mat3 uNormal;
 
+varying vec4 vPosition;
+varying vec3 vNormal;
 varying vec2 vTexCoord;
 varying vec3 vIrradiance;
 
@@ -35,11 +37,8 @@ float lambertianDiffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
 }
 
 void main(void) {
-  vec4 worldPosition = uWorld * aPosition;
-  vec3 normal = -uNormal * aNormal;
-
-  gl_Position = uViewProjection * worldPosition;
-
+  vPosition = uWorld * aPosition;
+  vNormal = -uNormal * aNormal;
   vTexCoord = aTexCoord;
   vIrradiance = vec3(0.0, 0.0, 0.0);
 
@@ -48,14 +47,14 @@ void main(void) {
       DirectionalLight light = uDirectionalLights[i];
 
       vIrradiance +=
-          lambertianDiffuseIrradiance(light.direction, normal) * light.color;
+          lambertianDiffuseIrradiance(light.direction, vNormal) * light.color;
     }
   #endif
 
   #if NUM_POINT_LIGHTS > 0
     for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
       PointLight light = uPointLights[i];
-      vec3 difference = worldPosition.xyz - light.position;
+      vec3 difference = vPosition.xyz - light.position;
       vec3 direction = normalize(difference);
       float distance = length(difference);
       float attenuation = 1.0 / (light.constantAttenuation +
@@ -63,7 +62,9 @@ void main(void) {
           distance * distance * light.quadraticAttenuation);
 
       vIrradiance += attenuation *
-          lambertianDiffuseIrradiance(direction, normal) * light.color;
+          lambertianDiffuseIrradiance(direction, vNormal) * light.color;
     }
   #endif
+
+  gl_Position = uViewProjection * vPosition;
 }

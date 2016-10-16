@@ -15,9 +15,24 @@ class SpotLight implements Light, Struct {
 
   double quadraticAttenuation = 0.0;
 
-  num falloffAngle = PI;
+  num _falloffAngle = PI;
+
+  double _falloffAngleCosine;
 
   double falloffExponent = 0.0;
+
+  num get falloffAngle => _falloffAngle;
+
+  void set falloffAngle(num value) {
+    _falloffAngle = value;
+    _falloffAngleCosine = null;
+  }
+
+  num get falloffAngleCosine {
+    _falloffAngleCosine ??= cos(falloffAngle);
+
+    return _falloffAngleCosine;
+  }
 
   Iterable<String> get members => const [
     'position',
@@ -26,8 +41,8 @@ class SpotLight implements Light, Struct {
     'constantAttenuation',
     'linearAttenuation',
     'quadraticAttenuation',
-    'falloffAngle',
-    'falloffExponent'
+    'falloffExponent',
+    'falloffAngleCosine'
   ];
 
   bool hasMember(String member) => members.contains(member);
@@ -39,8 +54,8 @@ class SpotLight implements Light, Struct {
     f('constantAttenuation', constantAttenuation);
     f('linearAttenuation', linearAttenuation);
     f('quadraticAttenuation', quadraticAttenuation);
-    f('falloffAngle', falloffAngle);
     f('falloffExponent', falloffExponent);
+    f('falloffAngleCosine', falloffAngleCosine);
   }
 
   operator [](String member) {
@@ -56,10 +71,10 @@ class SpotLight implements Light, Struct {
       return linearAttenuation;
     } else if (member == 'quadraticAttenuation') {
       return quadraticAttenuation;
-    } else if (member == 'falloffAngle') {
-      return falloffAngle;
     } else if (member == 'falloffExponent') {
       return falloffExponent;
+    } else if (member == 'falloffAngleCosine') {
+      return falloffAngleCosine;
     } else {
       return null;
     }

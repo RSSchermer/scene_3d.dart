@@ -173,7 +173,8 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
     if (_programNeedsUpdate) {
       var defines =
           '#define NUM_DIRECTIONAL_LIGHTS ${_directionalLights.length}\n'
-          '#define NUM_POINT_LIGHTS ${_pointLights.length}\n';
+          '#define NUM_POINT_LIGHTS ${_pointLights.length}\n'
+          '#define NUM_SPOT_LIGHTS ${_spotLights.length}\n';
 
       if (_activeDiffuseMap != null) {
         defines += '#define USE_DIFFUSE_MAP\n';
