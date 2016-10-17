@@ -7,29 +7,37 @@ uniform mat4 uViewProjection;
 uniform mat3 uNormal;
 
 varying vec4 vPosition;
-varying vec3 vNormal;
 varying vec2 vTexCoord;
+varying vec3 vNormal;
 varying vec3 vIrradiance;
 
-#if NUM_DIRECTIONAL_LIGHTS > 0
-  struct DirectionalLight {
-    vec3 direction;
-    vec3 color;
-  };
+#ifdef USE_NORMAL_MAP
+  attribute vec3 aTangent;
+  attribute vec3 aBitangent;
 
-  uniform DirectionalLight uDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
-#endif
+  varying vec3 vTangent;
+  varying vec3 vBitangent;
+#else
+  #if NUM_DIRECTIONAL_LIGHTS > 0
+    struct DirectionalLight {
+      vec3 direction;
+      vec3 color;
+    };
 
-#if NUM_POINT_LIGHTS > 0
-  struct PointLight {
-    vec3 position;
-    vec3 color;
-    float constantAttenuation;
-    float linearAttenuation;
-    float quadraticAttenuation;
-  };
+    uniform DirectionalLight uDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
+  #endif
 
-  uniform PointLight uPointLights[NUM_POINT_LIGHTS];
+  #if NUM_POINT_LIGHTS > 0
+    struct PointLight {
+      vec3 position;
+      vec3 color;
+      float constantAttenuation;
+      float linearAttenuation;
+      float quadraticAttenuation;
+    };
+
+    uniform PointLight uPointLights[NUM_POINT_LIGHTS];
+  #endif
 #endif
 
 float lambertianDiffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
@@ -38,32 +46,39 @@ float lambertianDiffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
 
 void main(void) {
   vPosition = uWorld * aPosition;
-  vNormal = -uNormal * aNormal;
   vTexCoord = aTexCoord;
   vIrradiance = vec3(0.0, 0.0, 0.0);
 
-  #if NUM_DIRECTIONAL_LIGHTS > 0
-    for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
-      DirectionalLight light = uDirectionalLights[i];
+  #ifdef USE_NORMAL_MAP
+    vTangent = -uNormal * aTangent;
+    vBitangent = -uNormal * aBitangent;
+    vNormal = -uNormal * aNormal;
+  #else
+    vNormal = -uNormal * aNormal;
 
-      vIrradiance +=
-          lambertianDiffuseIrradiance(light.direction, vNormal) * light.color;
-    }
-  #endif
+    #if NUM_DIRECTIONAL_LIGHTS > 0
+      for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
+        DirectionalLight light = uDirectionalLights[i];
 
-  #if NUM_POINT_LIGHTS > 0
-    for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
-      PointLight light = uPointLights[i];
-      vec3 difference = vPosition.xyz - light.position;
-      vec3 direction = normalize(difference);
-      float distance = length(difference);
-      float attenuation = 1.0 / (light.constantAttenuation +
-          distance * light.linearAttenuation +
-          distance * distance * light.quadraticAttenuation);
+        vIrradiance +=
+            lambertianDiffuseIrradiance(light.direction, vNormal) * light.color;
+      }
+    #endif
 
-      vIrradiance += attenuation *
-          lambertianDiffuseIrradiance(direction, vNormal) * light.color;
-    }
+    #if NUM_POINT_LIGHTS > 0
+      for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
+        PointLight light = uPointLights[i];
+        vec3 difference = vPosition.xyz - light.position;
+        vec3 direction = normalize(difference);
+        float distance = length(difference);
+        float attenuation = 1.0 / (light.constantAttenuation +
+            distance * light.linearAttenuation +
+            distance * distance * light.quadraticAttenuation);
+
+        vIrradiance += attenuation *
+            lambertianDiffuseIrradiance(direction, vNormal) * light.color;
+      }
+    #endif
   #endif
 
   gl_Position = uViewProjection * vPosition;

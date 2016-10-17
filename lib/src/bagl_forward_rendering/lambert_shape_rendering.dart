@@ -29,6 +29,8 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
   Texture2D _activeOpacityMap;
 
+  Texture2D _activeNormalMap;
+
   List<DirectionalLight> _directionalLights;
 
   List<PointLight> _pointLights;
@@ -98,11 +100,12 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
   }
 
   void update(Camera camera) {
+    final material = shape.material;
+
     _uniforms['uWorld'] = shape.worldTransform;
     _uniforms['uViewProjection'] = camera.viewProjectionTransform;
     _uniforms['uNormal'] = shape.normalTransform;
-
-    final material = shape.material;
+    _uniforms['uOpacity'] = material.opacity;
 
     final diffuseMap = material.diffuseMap;
 
@@ -168,7 +171,23 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
       _activeOpacityMap = opacityMap;
     }
 
-    _uniforms['uOpacity'] = material.opacity;
+    final normalMap = material.normalMap;
+
+    if (normalMap != _activeNormalMap) {
+      if (normalMap == null) {
+        _uniforms.remove('uNormalMapSampler');
+
+        _programNeedsUpdate = true;
+      } else {
+        _uniforms['uNormalMapSampler'] = new Sampler2D(normalMap);
+
+        if (_activeNormalMap == null) {
+          _programNeedsUpdate = true;
+        }
+      }
+
+      _activeNormalMap = normalMap;
+    }
 
     if (_programNeedsUpdate) {
       var defines =
@@ -186,6 +205,10 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
       if (_activeOpacityMap != null) {
         defines += '#define USE_OPACITY_MAP\n';
+      }
+
+      if (_activeNormalMap != null) {
+        defines += '#define USE_NORMAL_MAP\n';
       }
 
       programPool.release(program.value);
@@ -212,8 +235,10 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
           faceCulling: material.faceCulling,
           attributeNameMap: const {
             'aPosition': 'position',
+            'aTexCoord': 'texCoord',
             'aNormal': 'normal',
-            'aTexCoord': 'texCoord'
+            'aTangent': 'tangent',
+            'aBitangent': 'bitangent'
           });
     }
   }
