@@ -16,8 +16,7 @@ main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new LambertMaterial()
     ..diffuseMap = new Texture2D.fromImageURL('checkerboard_color_gradient.png');
-  var shape = new LambertTrianglesShape(triangles, material)
-    ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
+  var shape = new LambertTrianglesShape(triangles, material);
   var light = new DirectionalLight()
     ..direction = new Vector3(0.0, 0.0, -1.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)

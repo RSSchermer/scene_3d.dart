@@ -66,7 +66,20 @@ uniform float uOpacity;
   varying vec3 vBitangent;
 #endif
 
-float lambertianDiffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
+/// Computes a Lambertian diffuse irradiance factor for a light reflector.
+///
+/// Takes the following parameters:
+///
+/// - `lightDirection`: The direction of the incoming light. The vector should
+///   point from the surface towards the light (not from the light to the
+///   surface).
+/// - `surfaceNormal`: A unit vector perpendicular to the reflection surface.
+///   Points away from the front-face.
+///
+/// Returns an irradiance factor ranging from `1.0` when the `lightDirection`
+/// and the `surfaceNormal` are identical to `0.0` when the angle between the
+/// `lightDirection` and `surfaceNormal` is `0.5 * PI` (90 degrees) or greater.
+float diffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
   return max(0.0, dot(lightDirection, surfaceNormal));
 }
 
@@ -88,22 +101,22 @@ void main(void) {
         DirectionalLight light = uDirectionalLights[i];
 
         irradiance +=
-            lambertianDiffuseIrradiance(light.direction, normal) * light.color;
+            diffuseIrradiance(-light.direction, normal) * light.color;
       }
     #endif
 
     #if NUM_POINT_LIGHTS > 0
       for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
         PointLight light = uPointLights[i];
-        vec3 difference = vPosition.xyz - light.position;
+        vec3 difference = light.position - vPosition.xyz;
         vec3 direction = normalize(difference);
         float distance = length(difference);
         float attenuation = 1.0 / (light.constantAttenuation +
             distance * light.linearAttenuation +
             distance * distance * light.quadraticAttenuation);
 
-        irradiance += attenuation *
-            lambertianDiffuseIrradiance(direction, normal) * light.color;
+        irradiance +=
+            attenuation * diffuseIrradiance(direction, normal) * light.color;
       }
     #endif
   #endif
@@ -124,7 +137,7 @@ void main(void) {
           pow(clamp(relativeDif, 0.0, 1.0), light.falloffExponent);
 
       irradiance += attenuation * falloffFactor *
-          lambertianDiffuseIrradiance(direction, normal) * light.color;
+          diffuseIrradiance(direction, normal) * light.color;
     }
   #endif
 

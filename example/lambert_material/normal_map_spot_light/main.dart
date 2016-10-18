@@ -13,14 +13,16 @@ import 'package:scene_3d/scene.dart';
 import 'package:scene_3d/shape.dart';
 
 main() {
-  var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
+  var triangles = generateQuadTriangles(15.0, 15.0);
   var material = new LambertMaterial()
-    ..diffuseMap = new Texture2D.fromImageURL('brick_wall.jpg')
-    ..normalMap = new Texture2D.fromImageURL('brick_wall_normal.jpg');
-  var shape = new LambertTrianglesShape(triangles, material);
-  var light = new PointLight()
-    ..position = new Vector3(0.0, -10.0, 10.0)
-    ..quadraticAttenuation = 0.01;
+    ..diffuseMap = new Texture2D.fromImageURL('dirt.jpg')
+    ..normalMap = new Texture2D.fromImageURL('dirt_normal.jpg');
+  var shape = new LambertTrianglesShape(triangles, material)
+    ..position = new Vector3(0.0, -5.0, 0.0);
+  var light = new SpotLight()
+    ..position = new Vector3(0.0, 5.0, 0.0)
+    ..falloffAngle = 0.2 * PI
+    ..falloffExponent = 1.0;
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
     ..position = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();
@@ -31,7 +33,7 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    shape.rotation = new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
+    shape.rotation = new Quaternion.fromEulerAnglesXYZ(0.75 * PI + sin(time / 1000) * 0.25 * PI, 0.0, 0.0);
 
     renderer.render(camera);
 
