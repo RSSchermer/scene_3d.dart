@@ -25,7 +25,5 @@ class LambertMaterial implements Material {
 
   Texture2D opacityMap;
 
-  Texture2D bumpMap;
-
   Texture2D normalMap;
 }
