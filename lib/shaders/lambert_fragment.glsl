@@ -24,38 +24,20 @@ varying vec3 vIrradiance;
 uniform float uOpacity;
 
 #if NUM_SPOT_LIGHTS > 0
-  struct SpotLight {
-    vec3 position;
-    vec3 direction;
-    vec3 color;
-    float constantAttenuation;
-    float linearAttenuation;
-    float quadraticAttenuation;
-    float falloffAngleCosine;
-    float falloffExponent;
-  };
+  #include "lib/spot_light.glsl"
 
   uniform SpotLight uSpotLights[NUM_SPOT_LIGHTS];
 #endif
 
 #ifdef USE_NORMAL_MAP
   #if NUM_DIRECTIONAL_LIGHTS > 0
-    struct DirectionalLight {
-      vec3 direction;
-      vec3 color;
-    };
+    #include "lib/directional_light.glsl"
 
     uniform DirectionalLight uDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
   #endif
 
   #if NUM_POINT_LIGHTS > 0
-    struct PointLight {
-      vec3 position;
-      vec3 color;
-      float constantAttenuation;
-      float linearAttenuation;
-      float quadraticAttenuation;
-    };
+    #include "lib/point_light.glsl"
 
     uniform PointLight uPointLights[NUM_POINT_LIGHTS];
   #endif
@@ -66,27 +48,10 @@ uniform float uOpacity;
   varying vec3 vBitangent;
 #endif
 
-/// Computes a Lambertian diffuse irradiance factor for a light reflector.
-///
-/// Takes the following parameters:
-///
-/// - `lightDirection`: The direction of the incoming light. The vector should
-///   point from the surface towards the light (not from the light to the
-///   surface).
-/// - `surfaceNormal`: A unit vector perpendicular to the reflection surface.
-///   Points away from the front-face.
-///
-/// Returns an irradiance factor ranging from `1.0` when the `lightDirection`
-/// and the `surfaceNormal` are identical to `0.0` when the angle between the
-/// `lightDirection` and `surfaceNormal` is `0.5 * PI` (90 degrees) or greater.
-float diffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
-  return max(0.0, dot(lightDirection, surfaceNormal));
-}
-
 void main(void) {
   vec3 colorRGB = vec3(0.0, 0.0, 0.0);
   float colorAlpha = 1.0;
-  vec3 irradiance = vIrradiance;
+  vec3 totalIrradiance = vIrradiance;
 
   #ifdef USE_NORMAL_MAP
     mat3 TBN = mat3(vTangent, vBitangent, vNormal);
@@ -98,56 +63,30 @@ void main(void) {
   #ifdef USE_NORMAL_MAP
     #if NUM_DIRECTIONAL_LIGHTS > 0
       for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
-        DirectionalLight light = uDirectionalLights[i];
-
-        irradiance +=
-            diffuseIrradiance(-light.direction, normal) * light.color;
+        totalIrradiance += irradiance(uDirectionalLights[i], normal);
       }
     #endif
 
     #if NUM_POINT_LIGHTS > 0
       for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
-        PointLight light = uPointLights[i];
-        vec3 difference = light.position - vPosition.xyz;
-        vec3 direction = normalize(difference);
-        float distance = length(difference);
-        float attenuation = 1.0 / (light.constantAttenuation +
-            distance * light.linearAttenuation +
-            distance * distance * light.quadraticAttenuation);
-
-        irradiance +=
-            attenuation * diffuseIrradiance(direction, normal) * light.color;
+        totalIrradiance += irradiance(uPointLights[i], vPosition.xyz, normal);
       }
     #endif
   #endif
 
   #if NUM_SPOT_LIGHTS > 0
     for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {
-      SpotLight light = uSpotLights[i];
-      vec3 difference = vPosition.xyz - light.position;
-      vec3 direction = normalize(difference);
-      float distance = length(difference);
-      float attenuation = 1.0 / (light.constantAttenuation +
-          distance * light.linearAttenuation +
-          distance * distance * light.quadraticAttenuation);
-      float angleCosine = dot(direction, light.direction);
-      float relativeDif = (angleCosine - light.falloffAngleCosine) /
-          (1.0 - light.falloffAngleCosine);
-      float falloffFactor =
-          pow(clamp(relativeDif, 0.0, 1.0), light.falloffExponent);
-
-      irradiance += attenuation * falloffFactor *
-          diffuseIrradiance(direction, normal) * light.color;
+      totalIrradiance += irradiance(uSpotLights[i], vPosition.xyz, normal);
     }
   #endif
 
   #ifdef USE_DIFFUSE_MAP
     vec4 s = texture2D(uDiffuseMapSampler, vTexCoord);
 
-    colorRGB += s.rgb * irradiance;
+    colorRGB += s.rgb * totalIrradiance;
     colorAlpha *= s.a;
   #else
-    colorRGB += uDiffuseColor * irradiance;
+    colorRGB += uDiffuseColor * totalIrradiance;
   #endif
 
   #ifdef USE_EMISSION_MAP

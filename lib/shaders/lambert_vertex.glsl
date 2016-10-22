@@ -19,43 +19,19 @@ varying vec3 vIrradiance;
   varying vec3 vBitangent;
 #else
   #if NUM_DIRECTIONAL_LIGHTS > 0
-    struct DirectionalLight {
-      vec3 direction;
-      vec3 color;
-    };
+
+    #include "lib/directional_light.glsl"
 
     uniform DirectionalLight uDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
   #endif
 
   #if NUM_POINT_LIGHTS > 0
-    struct PointLight {
-      vec3 position;
-      vec3 color;
-      float constantAttenuation;
-      float linearAttenuation;
-      float quadraticAttenuation;
-    };
+
+    #include "lib/point_light.glsl"
 
     uniform PointLight uPointLights[NUM_POINT_LIGHTS];
   #endif
 #endif
-
-/// Computes a Lambertian diffuse irradiance factor for a light reflector.
-///
-/// Takes the following parameters:
-///
-/// - `lightDirection`: The direction of the incoming light. The vector should
-///   point from the surface towards the light (not from the light to the
-///   surface).
-/// - `surfaceNormal`: A unit vector perpendicular to the reflection surface.
-///   Points away from the front-face.
-///
-/// Returns an irradiance factor ranging from `1.0` when the `lightDirection`
-/// and the `surfaceNormal` are identical to `0.0` when the angle between the
-/// `lightDirection` and `surfaceNormal` is `0.5 * PI` (90 degrees) or greater.
-float diffuseIrradiance(vec3 lightDirection, vec3 surfaceNormal) {
-  return max(0.0, dot(lightDirection, surfaceNormal));
-}
 
 void main(void) {
   vPosition = uWorld * aPosition;
@@ -71,25 +47,13 @@ void main(void) {
 
     #if NUM_DIRECTIONAL_LIGHTS > 0
       for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
-        DirectionalLight light = uDirectionalLights[i];
-
-        vIrradiance +=
-            diffuseIrradiance(-light.direction, vNormal) * light.color;
+        vIrradiance += irradiance(uDirectionalLights[i], vNormal);
       }
     #endif
 
     #if NUM_POINT_LIGHTS > 0
       for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
-        PointLight light = uPointLights[i];
-        vec3 difference = light.position - vPosition.xyz;
-        vec3 direction = normalize(difference);
-        float distance = length(difference);
-        float attenuation = 1.0 / (light.constantAttenuation +
-            distance * light.linearAttenuation +
-            distance * distance * light.quadraticAttenuation);
-
-        vIrradiance +=
-            attenuation * diffuseIrradiance(direction, vNormal) * light.color;
+        vIrradiance += irradiance(uPointLights[i], vPosition.xyz, vNormal);
       }
     #endif
   #endif

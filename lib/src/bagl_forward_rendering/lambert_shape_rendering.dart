@@ -226,7 +226,7 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
   void render() {
     final material = shape.material;
-
+    
     if (material.opacity > 0.05) {
       frame.draw(shape.primitives, program.value, _uniforms,
           blending: material.blending,
