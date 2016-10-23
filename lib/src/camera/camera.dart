@@ -9,14 +9,11 @@ abstract class Camera {
 
   void set position(Vector3 position);
 
-  /// A [Quaternion] representing the orientation of this [Camera]'s view
-  /// direction in world space.
-  ///
-  /// The unrotated view direction is along the Z axis in the negative Z
-  /// direction in world space.
-  Quaternion get viewDirection;
+  /// A [Quaternion] representing the orientation of this [Camera] in world
+  /// space.
+  Quaternion get rotation;
 
-  void set viewDirection(Quaternion quaternion);
+  void set rotation(Quaternion quaternion);
 
   /// A [Matrix4] transformation which projects view space coordinates onto clip
   /// space coordinates.
@@ -29,4 +26,10 @@ abstract class Camera {
   /// Combines the [projectionTransform] and the [viewTransform] into a single
   /// [Matrix4] transformation.
   Matrix4 get viewProjectionTransform;
+
+  /// A unit vector indicating the direction in which the camera is pointing.
+  ///
+  /// The unrotated view direction is along the Z axis in the negative Z
+  /// direction in world space.
+  Vector3 get viewDirection;
 }

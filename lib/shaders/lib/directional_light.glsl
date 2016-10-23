@@ -18,4 +18,10 @@ struct DirectionalLight {
 vec3 irradiance(DirectionalLight light, vec3 normal) {
   return irradianceFactor(-light.direction, normal) * light.color;
 }
+
+vec3 specularity(DirectionalLight light, vec3 viewDirection, vec3 normal,
+    float shininess) {
+  return specularityFactor(-light.direction, viewDirection, normal, shininess) *
+      light.color;
+}
 #endif

@@ -13,7 +13,7 @@ class PerspectiveCamera implements Camera {
 
   Vector3 _position = new Vector3(0.0, 0.0, 0.0);
 
-  Quaternion _viewDirection = new Quaternion(0.0, 0.0, 0.0, 1.0);
+  Quaternion _rotation = new Quaternion(0.0, 0.0, 0.0, 1.0);
 
   Matrix4 _translationMatrix = new Matrix4.identity();
 
@@ -22,6 +22,8 @@ class PerspectiveCamera implements Camera {
   Matrix4 _viewTransform;
 
   Matrix4 _viewProjectionTransform;
+
+  Vector3 _viewDirection = new Vector3(0.0, 0.0, -1.0);
 
   PerspectiveCamera(
       double fovVertical, double aspectRatio, double near, double far)
@@ -102,19 +104,20 @@ class PerspectiveCamera implements Camera {
     _viewProjectionTransform = null;
   }
 
-  Quaternion get viewDirection => _viewDirection;
+  Quaternion get rotation => _rotation;
 
-  void set viewDirection(Quaternion value) {
-    _viewDirection = value;
+  void set rotation(Quaternion value) {
+    _rotation = value;
     _viewTransform = null;
     _viewProjectionTransform = null;
+    _viewDirection = null;
   }
 
   /// The horizontal field-of-view in radians.
   double get fovHorizontal => _fovVertical * _aspectRatio;
 
   Matrix4 get viewTransform {
-    _viewTransform ??= (_translationMatrix * viewDirection.asMatrix4()).inverse;
+    _viewTransform ??= (_translationMatrix * rotation.asMatrix4()).inverse;
 
     return _viewTransform;
   }
@@ -130,5 +133,11 @@ class PerspectiveCamera implements Camera {
     _viewProjectionTransform ??= projectionTransform * viewTransform;
 
     return _viewProjectionTransform;
+  }
+
+  Vector3 get viewDirection {
+    _viewDirection ??= rotation * new Vector3(0.0, 0.0, -1.0);
+
+    return _viewDirection;
   }
 }

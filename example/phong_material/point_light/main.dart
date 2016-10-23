@@ -19,7 +19,7 @@ main() {
   var shape = new PhongTrianglesShape(triangles, material)
     ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
   var light = new PointLight()
-    ..position = new Vector3(0.0, 0.0, 15.0)
+    ..position = new Vector3(0.0, 5.0, 15.0)
     ..quadraticAttenuation = 0.01;
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
     ..position = new Vector3(0.0, 0.0, 20.0);

@@ -1,5 +1,6 @@
 precision mediump float;
 
+uniform vec3 uViewDirection;
 uniform float uOpacity;
 
 varying vec4 vPosition;
@@ -51,6 +52,7 @@ void main(void) {
   vec3 colorRGB = vec3(0.0, 0.0, 0.0);
   float colorAlpha = 1.0;
   vec3 totalIrradiance = vec3(0.0, 0.0, 0.0);
+  vec3 totalSpecularity = vec3(0.0, 0.0, 0.0);
 
   #ifdef USE_NORMAL_MAP
     mat3 TBN = mat3(vTangent, vBitangent, vNormal);
@@ -62,18 +64,24 @@ void main(void) {
   #if NUM_DIRECTIONAL_LIGHTS > 0
     for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
       totalIrradiance += irradiance(uDirectionalLights[i], normal);
+      totalSpecularity +=
+          specularity(uDirectionalLights[i], uViewDirection, normal, 10.0);
     }
   #endif
 
   #if NUM_POINT_LIGHTS > 0
     for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
       totalIrradiance += irradiance(uPointLights[i], vPosition.xyz, normal);
+      totalSpecularity +=
+          specularity(uPointLights[i], uViewDirection, vPosition.xyz, normal, 10.0);
     }
   #endif
 
   #if NUM_SPOT_LIGHTS > 0
     for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {
       totalIrradiance += irradiance(uSpotLights[i], vPosition.xyz, normal);
+      totalSpecularity +=
+          specularity(uSpotLights[i], uViewDirection, vPosition.xyz, normal, 10.0);
     }
   #endif
 
@@ -96,6 +104,7 @@ void main(void) {
     colorAlpha *= texture2D(uOpacityMapSampler, vTexCoord).a;
   #endif
 
+  colorRGB += vec3(1.0, 1.0, 1.0) * totalSpecularity;
   colorAlpha *= clamp(uOpacity, 0.0, 1.0);
 
   gl_FragColor = vec4(colorRGB, colorAlpha);

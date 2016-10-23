@@ -17,4 +17,11 @@
 float irradianceFactor(vec3 lightDirection, vec3 surfaceNormal) {
   return max(0.0, dot(lightDirection, surfaceNormal));
 }
+
+float specularityFactor(vec3 lightDirection, vec3 viewDirection,
+    vec3 surfaceNormal, float surfaceShininess) {
+  vec3 lightReflected = reflect(lightDirection, surfaceNormal);
+
+  return pow(max(0.0, dot(lightReflected, viewDirection)), surfaceShininess);
+}
 #endif

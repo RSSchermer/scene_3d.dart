@@ -59,4 +59,20 @@ vec3 irradiance(SpotLight light, vec3 position, vec3 normal) {
   return attenuationFactor * falloffFactor *
       irradianceFactor(direction, normal) * light.color;
 }
+
+vec3 specularity(SpotLight light, vec3 viewDirection, vec3 position, vec3 normal, float shininess) {
+  vec3 difference = position - light.position;
+  vec3 direction = normalize(difference);
+  float distance = length(difference);
+  float attenuationFactor = attenuation(light, distance);
+  float angleCosine = dot(direction, light.direction);
+  float relativeDif = (angleCosine - light.falloffAngleCosine) /
+      (1.0 - light.falloffAngleCosine);
+  float falloffFactor =
+      pow(clamp(relativeDif, 0.0, 1.0), light.falloffExponent);
+
+  return attenuationFactor * falloffFactor *
+      specularityFactor(-direction, viewDirection, normal, shininess) *
+      light.color;
+}
 #endif

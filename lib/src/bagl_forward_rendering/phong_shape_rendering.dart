@@ -104,6 +104,7 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
 
     _uniforms['uWorld'] = shape.worldTransform;
     _uniforms['uViewProjection'] = camera.viewProjectionTransform;
+    _uniforms['uViewDirection'] = camera.viewDirection;
     _uniforms['uNormal'] = shape.normalTransform;
     _uniforms['uOpacity'] = material.opacity;
 

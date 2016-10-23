@@ -44,7 +44,7 @@ void main() {
     group('viewTransform', () {
       final camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
         ..position = new Vector3(1.0, 2.0, 3.0)
-        ..viewDirection = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
+        ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
         expect(camera.viewTransform.values, orderedCloseTo([
@@ -72,7 +72,7 @@ void main() {
     group('viewProjectionTransform', () {
       final camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
         ..position = new Vector3(1.0, 2.0, 3.0)
-        ..viewDirection = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
+        ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
         expect(camera.viewProjectionTransform.values, orderedCloseTo([

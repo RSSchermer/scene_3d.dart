@@ -43,4 +43,15 @@ vec3 irradiance(PointLight light, vec3 position, vec3 normal) {
 
   return attenuationFactor * irradianceFactor(direction, normal) * light.color;
 }
+
+vec3 specularity(PointLight light, vec3 viewDirection, vec3 position, vec3 normal, float shininess) {
+  vec3 difference = light.position - position;
+  vec3 direction = normalize(difference);
+  float distance = length(difference);
+  float attenuationFactor = attenuation(light, distance);
+
+  return attenuationFactor *
+      specularityFactor(direction, viewDirection, normal, shininess) *
+      light.color;
+}
 #endif
