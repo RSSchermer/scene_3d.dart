@@ -22,5 +22,5 @@ part 'src/bagl_forward_rendering/constant_shape_rendering.dart';
 part 'src/bagl_forward_rendering/lambert_shape_rendering.dart';
 part 'src/bagl_forward_rendering/null_view.dart';
 part 'src/bagl_forward_rendering/object_views.dart';
-part 'src/bagl_forward_rendering/phong_rendering.dart';
+part 'src/bagl_forward_rendering/phong_shape_rendering.dart';
 part 'src/bagl_forward_rendering/program_pool.dart';
