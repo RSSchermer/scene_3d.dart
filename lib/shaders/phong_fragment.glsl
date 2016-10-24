@@ -2,6 +2,7 @@ precision mediump float;
 
 uniform vec3 uViewDirection;
 uniform float uOpacity;
+uniform float uShininess;
 
 varying vec4 vPosition;
 varying vec2 vTexCoord;
@@ -11,6 +12,12 @@ varying vec3 vNormal;
   uniform sampler2D uDiffuseMapSampler;
 #else
   uniform vec3 uDiffuseColor;
+#endif
+
+#ifdef USE_SPECULAR_MAP
+  uniform sampler2D uSpecularMapSampler;
+#else
+  uniform vec3 uSpecularColor;
 #endif
 
 #ifdef USE_EMISSION_MAP
@@ -56,7 +63,8 @@ void main(void) {
 
   #ifdef USE_NORMAL_MAP
     mat3 TBN = mat3(vTangent, vBitangent, vNormal);
-    vec3 normal = TBN * (texture2D(uNormalMapSampler, vTexCoord).xyz * 2.0 - 1.0);
+    vec3 normal =
+        TBN * (texture2D(uNormalMapSampler, vTexCoord).xyz * 2.0 - 1.0);
   #else
     vec3 normal = vNormal;
   #endif
@@ -64,24 +72,24 @@ void main(void) {
   #if NUM_DIRECTIONAL_LIGHTS > 0
     for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
       totalIrradiance += irradiance(uDirectionalLights[i], normal);
-      totalSpecularity +=
-          specularity(uDirectionalLights[i], uViewDirection, normal, 10.0);
+      totalSpecularity += specularity(uDirectionalLights[i], uViewDirection,
+          normal, uShininess);
     }
   #endif
 
   #if NUM_POINT_LIGHTS > 0
     for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
       totalIrradiance += irradiance(uPointLights[i], vPosition.xyz, normal);
-      totalSpecularity +=
-          specularity(uPointLights[i], uViewDirection, vPosition.xyz, normal, 10.0);
+      totalSpecularity += specularity(uPointLights[i], uViewDirection,
+          vPosition.xyz, normal, uShininess);
     }
   #endif
 
   #if NUM_SPOT_LIGHTS > 0
     for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {
       totalIrradiance += irradiance(uSpotLights[i], vPosition.xyz, normal);
-      totalSpecularity +=
-          specularity(uSpotLights[i], uViewDirection, vPosition.xyz, normal, 10.0);
+      totalSpecularity += specularity(uSpotLights[i], uViewDirection,
+          vPosition.xyz, normal, uShininess);
     }
   #endif
 
@@ -94,6 +102,13 @@ void main(void) {
     colorRGB += uDiffuseColor * totalIrradiance;
   #endif
 
+  #ifdef USE_SPECULAR_MAP
+    colorRGB +=
+        texture2D(uSpecularMapSampler, vTexCoord).rgb * totalSpecularity;
+  #else
+    colorRGB += uSpecularColor * totalSpecularity;
+  #endif
+
   #ifdef USE_EMISSION_MAP
     colorRGB += texture2D(uEmissionMapSampler, vTexCoord).rgb;
   #else
@@ -104,7 +119,6 @@ void main(void) {
     colorAlpha *= texture2D(uOpacityMapSampler, vTexCoord).a;
   #endif
 
-  colorRGB += vec3(1.0, 1.0, 1.0) * totalSpecularity;
   colorAlpha *= clamp(uOpacity, 0.0, 1.0);
 
   gl_FragColor = vec4(colorRGB, colorAlpha);

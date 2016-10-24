@@ -2,10 +2,10 @@ part of bagl_forward_rendering;
 
 class PhongShapeRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
-  INLINE_ASSET('../../shaders/phong_vertex.glsl');
+      INLINE_ASSET('../../shaders/phong_vertex.glsl');
 
   static final String fragmentShaderSource =
-  INLINE_ASSET('../../shaders/phong_fragment.glsl');
+      INLINE_ASSET('../../shaders/phong_fragment.glsl');
 
   final PhongTrianglesShape shape;
 
@@ -24,6 +24,8 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
   final Map<String, dynamic> _uniforms = {};
 
   Texture2D _activeDiffuseMap;
+
+  Texture2D _activeSpecularMap;
 
   Texture2D _activeEmissionMap;
 
@@ -103,10 +105,11 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
     final material = shape.material;
 
     _uniforms['uWorld'] = shape.worldTransform;
+    _uniforms['uNormal'] = shape.normalTransform;
     _uniforms['uViewProjection'] = camera.viewProjectionTransform;
     _uniforms['uViewDirection'] = camera.viewDirection;
-    _uniforms['uNormal'] = shape.normalTransform;
     _uniforms['uOpacity'] = material.opacity;
+    _uniforms['uShininess'] = material.shininess;
 
     final diffuseMap = material.diffuseMap;
 
@@ -129,6 +132,29 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
 
     if (_activeDiffuseMap == null) {
       _uniforms['uDiffuseColor'] = material.diffuseColor;
+    }
+
+    final specularMap = material.specularMap;
+
+    if (specularMap != _activeSpecularMap) {
+      if (specularMap == null) {
+        _uniforms.remove('uSpecularMapSampler');
+
+        _programNeedsUpdate = true;
+      } else {
+        _uniforms.remove('uSpecularColor');
+        _uniforms['uSpecularMapSampler'] = new Sampler2D(specularMap);
+
+        if (_activeSpecularMap == null) {
+          _programNeedsUpdate = true;
+        }
+      }
+
+      _activeSpecularMap = specularMap;
+    }
+
+    if (_activeSpecularMap == null) {
+      _uniforms['uSpecularColor'] = material.specularColor;
     }
 
     final emissionMap = material.emissionMap;
@@ -200,6 +226,10 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
         defines += '#define USE_DIFFUSE_MAP\n';
       }
 
+      if (_activeSpecularMap != null) {
+        defines += '#define USE_SPECULAR_MAP\n';
+      }
+
       if (_activeEmissionMap != null) {
         defines += '#define USE_EMISSION_MAP\n';
       }
@@ -259,8 +289,7 @@ class PhongShapeView extends DelegatingIterable<AtomicRenderUnit>
 
   PhongShapeView(PhongTrianglesShape shape, Scene scene, Frame frame,
       ProgramPool programPool)
-      : renderUnit =
-  new PhongShapeRenderUnit(shape, scene, frame, programPool),
+      : renderUnit = new PhongShapeRenderUnit(shape, scene, frame, programPool),
         shape = shape,
         scene = scene,
         frame = frame,
