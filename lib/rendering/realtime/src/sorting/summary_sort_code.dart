@@ -1,4 +1,4 @@
-part of render_sorting;
+part of rendering.realtime.sorting;
 
 typedef SummarySortCode SummarySortCodeResolver();
 

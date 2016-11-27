@@ -1,11 +1,11 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 class ConstantShapeRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
-      INLINE_ASSET('../../shaders/constant_vertex.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/constant_vertex.glsl');
 
   static final String fragmentShaderSource =
-      INLINE_ASSET('../../shaders/constant_fragment.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/constant_fragment.glsl');
 
   final ConstantTrianglesShape shape;
 
@@ -121,7 +121,7 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class ConstantShapeView extends DelegatingIterable<AtomicRenderUnit>
+class ConstantShapeView extends DelegatingIterable<BaGLRenderUnit>
     implements ObjectView {
   final ConstantShapeRenderUnit renderUnit;
 
@@ -144,7 +144,7 @@ class ConstantShapeView extends DelegatingIterable<AtomicRenderUnit>
 
   Object get object => shape;
 
-  Iterable<AtomicRenderUnit> get delegate => [renderUnit];
+  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
 
   ViewChangeRecord update(Camera camera) {
     renderUnit.update(camera);

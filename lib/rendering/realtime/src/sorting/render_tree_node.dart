@@ -1,64 +1,61 @@
-part of render_sorting;
+part of rendering.realtime.sorting;
 
 /// Function that returns a new [RenderUnitNode] for the [renderUnit].
-typedef RenderUnitNode RenderUnitNodeFactory(AtomicRenderUnit renderUnit);
-
-/// Function that returns a new BranchingNode
-typedef BranchingNode BranchingNodeFactory();
+typedef RenderUnitNode<U> RenderUnitNodeFactory<U extends AtomicRenderUnit>(
+    U renderUnit);
 
 /// Enumerates the ways in which the children of a [BranchingNode] may be
 /// ordered.
 enum SortOrder { ascending, descending, unsorted }
 
-/// Node in a sorted render tree.
+/// Node in a render tree.
 ///
-/// When the nodes in a sorted render tree are iterated over depth-first, then
-/// the nodes should present [AtomicRenderUnit]s in an order that is beneficial
-/// to rendering performance.
-abstract class RenderSortTreeNode {
-  BranchingNode _parentNode;
+/// When the nodes in a render tree are iterated over depth-first, then the
+/// nodes should present [AtomicRenderUnit]s in an order that is beneficial to
+/// rendering performance.
+abstract class RenderTreeNode<U extends AtomicRenderUnit> {
+  BranchingNode<U> _parentNode;
 
-  RenderSortTreeNode _nextSibling;
+  RenderTreeNode<U> _nextSibling;
 
-  RenderSortTreeNode _previousSibling;
+  RenderTreeNode<U> _previousSibling;
 
-  /// The parent node if this [RenderSortTreeNode].
+  /// The parent node if this [RenderTreeNode].
   ///
-  /// May be `null` to indicate that this [RenderSortTreeNode] has no parent
+  /// May be `null` to indicate that this [RenderTreeNode] has no parent
   /// node and thus is a root node.
-  BranchingNode get parentNode => _parentNode;
+  BranchingNode<U> get parentNode => _parentNode;
 
-  /// This [RenderSortTreeNode]'s next sibling amongst the [parentNode]'s
+  /// This [RenderTreeNode]'s next sibling amongst the [parentNode]'s
   /// children.
   ///
-  /// Returns `null` if this [RenderSortTreeNode] has no [parentNode] or is the
+  /// Returns `null` if this [RenderTreeNode] has no [parentNode] or is the
   /// [parentNode]'s last child.
-  RenderSortTreeNode get nextSibling => _nextSibling;
+  RenderTreeNode<U> get nextSibling => _nextSibling;
 
-  /// This [RenderSortTreeNode]'s previous sibling amongst the [parentNode]'s
+  /// This [RenderTreeNode]'s previous sibling amongst the [parentNode]'s
   /// children.
   ///
-  /// Returns `null` if this [RenderSortTreeNode] has no [parentNode] or is the
+  /// Returns `null` if this [RenderTreeNode] has no [parentNode] or is the
   /// [parentNode]'s first child.
-  RenderSortTreeNode get previousSibling => _previousSibling;
+  RenderTreeNode<U> get previousSibling => _previousSibling;
 
-  /// Code that may be used to determine the position if this
-  /// [RenderSortTreeNode] amongst its sibling nodes.
+  /// Code that may be used to determine the position of this [RenderTreeNode]
+  /// amongst its sibling nodes.
   ObservableValue<num> get sortCode;
 
   /// Accepts a visit from the [visitor].
   void accept(RenderTreeVisitor visitor);
 
-  /// Disconnects this [RenderUnitNode] from the tree.
+  /// Disconnects this [RenderTreeNode] from the tree.
   ///
   /// Leaves the node parentless and without siblings; a root node. Returns
   /// `true` if the node was disconnected successfully, returns `false` if the
   /// node was already parentless or could not be released from its parent.
   bool disconnect();
 
-  /// Updates the node order of the tree represented by this
-  /// [RenderSortTreeNode] to reflect the current state of its
-  /// [AtomicRenderUnit]s.
+  /// Updates the node order of the tree represented by this [RenderTreeNode] to
+  /// reflect the current state of its [AtomicRenderUnit]s.
   ///
   /// Although new nodes are inserted in order, state changes in
   /// [AtomicRenderUnit]s processed previously may degenerate the sort order of
@@ -67,19 +64,20 @@ abstract class RenderSortTreeNode {
   /// order. Calling this method reprocess [AtomicRenderUnit]s down different
   /// branches as necessary and updates the order of the branches to once again
   /// reflect the expected order.
-  void sortTree();
+  void sort();
 
   /// Returns a new copy of the subtree represented by this
-  /// [RenderSortTreeNode].
-  RenderSortTreeNode toRenderSortTree();
+  /// [RenderTreeNode].
+  RenderTreeNode<U> toRenderTree();
 }
 
-/// A [RenderSortTreeNode] that branches into one or more [children].
+/// A [RenderTreeNode] that branches into one or more [branches].
 ///
 /// Used to divide [AtomicRenderUnit]s into groups.
-abstract class BranchingNode extends RenderSortTreeNode {
+abstract class BranchingNode<U extends AtomicRenderUnit>
+    extends RenderTreeNode<U> {
   /// This [BranchingNode]'s child nodes.
-  Iterable<RenderSortTreeNode> get children;
+  Iterable<RenderTreeNode<U>> get branches;
 
   void accept(RenderTreeVisitor visitor) {
     visitor.visitBranchingNode(this);
@@ -93,32 +91,34 @@ abstract class BranchingNode extends RenderSortTreeNode {
   /// with each level assigning the [AtomicRenderUnit] to more specific groups.
   /// If none of the [BranchingNode]'s existing child branches are appropriate
   /// for the [renderUnit], it may create a new child branch.
-  RenderUnitNode process(AtomicRenderUnit renderUnit);
+  RenderUnitNode<U> process(U renderUnit);
 
-  /// Removes the [node] from the [children].
+  /// Removes the [node] from the [branches].
   ///
-  /// Returns `true` is the node was successfully removed from the [children] or
+  /// Returns `true` is the node was successfully removed from the [branches] or
   /// `false` if the [node] was not a child of this [BranchingNode] or could not
   /// be removed for other reasons.
-  bool removeChild(RenderSortTreeNode childNode);
+  bool removeBranch(RenderTreeNode<U> node);
 
   /// Cancels all subscriptions this [BranchingNode] has on any observable
-  /// values on the [renderUnitNode] or its [AtomicRenderUnit].
-  void cancelSubscriptions(RenderUnitNode renderUnitNode);
+  /// values associated with the [renderUnitNode].
+  void cancelSubscriptions(RenderUnitNode<U> renderUnitNode);
 
   bool disconnect() {
     if (parentNode != null) {
-      return parentNode.removeChild(this);
+      return parentNode.removeBranch(this);
     } else {
       return false;
     }
   }
+
+  BranchingNode<U> toRenderTree();
 }
 
-/// A terminal [RenderSortTreeNode] that holds one [AtomicRenderUnit].
-class RenderUnitNode extends RenderSortTreeNode {
+/// A terminal [RenderTreeNode] that holds an [AtomicRenderUnit].
+class RenderUnitNode<U extends AtomicRenderUnit> extends RenderTreeNode<U> {
   /// The [AtomicRenderUnit] held by this [RenderUnitNode].
-  final AtomicRenderUnit renderUnit;
+  final U renderUnit;
 
   final ObservableValue<num> sortCode;
 
@@ -139,7 +139,7 @@ class RenderUnitNode extends RenderSortTreeNode {
     }
 
     if (parentNode != null) {
-      return parentNode.removeChild(this);
+      return parentNode.removeBranch(this);
     } else {
       return false;
     }
@@ -151,7 +151,7 @@ class RenderUnitNode extends RenderSortTreeNode {
   /// Typically called by a [BranchingNode] higher up in the tree when the
   /// [renderUnit]'s state changes in a way that requires assigning it to
   /// a different branch.
-  void reprocess(BranchingNode reentryNode) {
+  void reprocess(BranchingNode<U> reentryNode) {
     var node = parentNode;
 
     while (node != reentryNode && node != null) {
@@ -160,24 +160,25 @@ class RenderUnitNode extends RenderSortTreeNode {
       node = node.parentNode;
     }
 
-    parentNode?.removeChild(this);
+    parentNode?.removeBranch(this);
     reentryNode.process(renderUnit);
   }
 
-  void sortTree() {}
+  void sort() {}
 
-  RenderUnitNode toRenderSortTree() => new RenderUnitNode(renderUnit, sortCode);
+  RenderUnitNode<U> toRenderTree() =>
+      new RenderUnitNode<U>(renderUnit, sortCode);
 }
 
 /// A [BranchingNode] that holds some number of terminal [RenderUnitNode]s.
-class RenderUnitGroupNode extends BranchingNode {
+class RenderUnitGroupNode<U extends AtomicRenderUnit> extends BranchingNode<U> {
   /// The function used to make new [RenderUnitNode]s when processing an
   /// [AtomicRenderUnit].
-  final RenderUnitNodeFactory makeRenderUnitNode;
+  final RenderUnitNodeFactory<U> makeRenderUnitNode;
 
   final SummarySortCode sortCode;
 
-  ChildNodes _children;
+  ChildNodes<U> _children;
 
   /// Instantiates a new [RenderUnitGroupNode].
   RenderUnitGroupNode(this.sortCode, this.makeRenderUnitNode,
@@ -191,9 +192,9 @@ class RenderUnitGroupNode extends BranchingNode {
     }
   }
 
-  Iterable<RenderSortTreeNode> get children => _children;
+  Iterable<RenderTreeNode<U>> get branches => _children;
 
-  RenderUnitNode process(AtomicRenderUnit renderUnit) {
+  RenderUnitNode<U> process(U renderUnit) {
     final node = makeRenderUnitNode(renderUnit);
 
     _children.add(node);
@@ -202,11 +203,11 @@ class RenderUnitGroupNode extends BranchingNode {
     return node;
   }
 
-  bool removeChild(RenderSortTreeNode childNode) {
-    final success = _children.remove(childNode);
+  bool removeBranch(RenderTreeNode<U> node) {
+    final success = _children.remove(node);
 
     if (success) {
-      sortCode.remove(childNode.sortCode);
+      sortCode.remove(node.sortCode);
     }
 
     if (_children.isEmpty) {
@@ -216,19 +217,19 @@ class RenderUnitGroupNode extends BranchingNode {
     return success;
   }
 
-  void cancelSubscriptions(RenderUnitNode renderUnitNode) {}
+  void cancelSubscriptions(RenderUnitNode<U> renderUnitNode) {}
 
-  void sortTree() {
+  void sort() {
     _children.sort();
   }
 
-  RenderUnitGroupNode toRenderSortTree() {
+  RenderUnitGroupNode<U> toRenderTree() {
     final newSortCode = sortCode.asEmpty();
-    final result = new RenderUnitGroupNode(newSortCode, makeRenderUnitNode,
+    final result = new RenderUnitGroupNode<U>(newSortCode, makeRenderUnitNode,
         sortOrder: _children.sortOrder);
 
     for (var child in _children) {
-      result._children.add(child.toRenderSortTree());
+      result._children.add(child.toRenderTree());
       newSortCode.add(child.sortCode);
     }
 
@@ -236,30 +237,30 @@ class RenderUnitGroupNode extends BranchingNode {
   }
 }
 
-/// Defines an interface for [RenderSortTreeNode] visitors.
-abstract class RenderTreeVisitor {
+/// Defines an interface for [RenderTreeNode] visitors.
+abstract class RenderTreeVisitor<U extends AtomicRenderUnit> {
   /// Visit a [BranchingNode].
-  void visitBranchingNode(BranchingNode node);
+  void visitBranchingNode(BranchingNode<U> node);
 
   /// Visit a terminal [RenderUnitNode].
-  void visitRenderUnitNode(RenderUnitNode node);
+  void visitRenderUnitNode(RenderUnitNode<U> node);
 }
 
-class _RenderTreeLeafIterator
-    implements Iterator<RenderUnitNode>, RenderTreeVisitor {
-  final RenderSortTreeNode rootNode;
+class _RenderTreeLeafIterator<U extends AtomicRenderUnit>
+    implements Iterator<RenderUnitNode<U>>, RenderTreeVisitor<U> {
+  final RenderTreeNode<U> rootNode;
 
-  RenderUnitNode _currentNode = null;
+  RenderUnitNode<U> _currentNode = null;
 
   bool _moveDown = true;
 
   bool _terminated = false;
 
   _RenderTreeLeafIterator(this.rootNode) {
-    rootNode.sortTree();
+    rootNode.sort();
   }
 
-  RenderUnitNode get current => _currentNode;
+  RenderUnitNode<U> get current => _currentNode;
 
   bool moveNext() {
     (_currentNode ?? rootNode).accept(this);
@@ -267,7 +268,7 @@ class _RenderTreeLeafIterator
     return !_terminated;
   }
 
-  void visitRenderUnitNode(RenderUnitNode node) {
+  void visitRenderUnitNode(RenderUnitNode<U> node) {
     if (_moveDown) {
       _moveDown = false;
 
@@ -285,9 +286,9 @@ class _RenderTreeLeafIterator
     }
   }
 
-  void visitBranchingNode(BranchingNode node) {
+  void visitBranchingNode(BranchingNode<U> node) {
     if (_moveDown) {
-      final firstChild = node.children.first;
+      final firstChild = node.branches.first;
 
       if (firstChild != null) {
         firstChild.accept(this);
@@ -310,12 +311,12 @@ class _RenderTreeLeafIterator
   }
 }
 
-class _RenderUnitIterator implements Iterator<AtomicRenderUnit> {
-  final _RenderTreeLeafIterator leafIterator;
+class _RenderUnitIterator<U extends AtomicRenderUnit> implements Iterator<U> {
+  final _RenderTreeLeafIterator<U> leafIterator;
 
   _RenderUnitIterator(this.leafIterator);
 
-  AtomicRenderUnit get current => leafIterator.current.renderUnit;
+  U get current => leafIterator.current.renderUnit;
 
   bool moveNext() => leafIterator.moveNext();
 }

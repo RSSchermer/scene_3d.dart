@@ -1,7 +1,7 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
-/// A collection of [AtomicRenderUnit]s that together render a single object.
-abstract class ObjectView extends Iterable<AtomicRenderUnit> {
+/// A collection of [BaGLRenderUnit]s that together render a single object.
+abstract class ObjectView extends Iterable<BaGLRenderUnit> {
   /// The object represented by this [ObjectView].
   Object get object;
 
@@ -14,14 +14,14 @@ abstract class ObjectView extends Iterable<AtomicRenderUnit> {
   ViewChangeRecord update(Camera camera);
 }
 
-/// Records the [AtomicRenderUnit]s that were added or removed from an
+/// Records the [BaGLRenderUnit]s that were added or removed from an
 /// [ObjectView].
 class ViewChangeRecord {
   /// The [AtomicRenderUnit]s that were added as part of this change.
-  final Set<AtomicRenderUnit> additions;
+  final Set<BaGLRenderUnit> additions;
 
   /// The [AtomicRenderUnit]s that were removed as part of this change.
-  final Set<AtomicRenderUnit> removals;
+  final Set<BaGLRenderUnit> removals;
 
   /// Instantiates a new [ViewChangeRecord] for a change with the given
   /// [additions] and [removals].
@@ -34,11 +34,11 @@ class ViewChangeRecord {
 
 /// A set of [ObjectView]s.
 ///
-/// Collects the [AtomicRenderUnit]s [ObjectView]s it contains in the
+/// Collects the [AtomicRenderUnit]s contained in the [ObjectView]s in its
 /// [renderBin].
 class ViewSet extends SetBase<ObjectView> implements Set<ObjectView> {
   /// The aggregated [AtomicRenderUnit]s of these [ViewSet].
-  final Set<AtomicRenderUnit> renderBin;
+  final Set<BaGLRenderUnit> renderBin;
 
   final Set<ObjectView> _delegate = new Set();
 

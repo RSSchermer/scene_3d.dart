@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:bagl/bagl.dart';
 
-import 'package:scene_3d/bagl_forward_rendering.dart';
+import 'package:scene_3d/rendering/realtime/bagl.dart';
 import 'package:scene_3d/camera.dart';
 import 'package:scene_3d/geometry_generators.dart';
 import 'package:scene_3d/material.dart';

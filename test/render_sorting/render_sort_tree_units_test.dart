@@ -1,9 +1,11 @@
 import 'package:test/test.dart';
-import 'package:bagl/rendering.dart';
 import 'package:scene_3d/observable_value.dart';
-import 'package:scene_3d/render_sorting.dart';
+import 'package:scene_3d/rendering/realtime/atomic_render_unit.dart';
+import 'package:scene_3d/rendering/realtime/sorting.dart';
 
-class RenderUnit extends AtomicRenderUnit with TranslucencyGroupable, ProgramGroupable, SquaredDistanceSortable {
+class Program {}
+
+class RenderUnit extends AtomicRenderUnit {
   final int id;
 
   final ObservableValue<bool> isTranslucent;
@@ -21,33 +23,35 @@ class RenderUnit extends AtomicRenderUnit with TranslucencyGroupable, ProgramGro
 }
 
 void main() {
-  group('SortedRenderBin', () {
-    makeOpaqueUnitNode(AtomicRenderUnit renderUnit) =>
-        new RenderUnitNode(renderUnit, new ObservableValue(0));
+  group('SortedRenderUnits', () {
+    makeOpaqueUnitNode(RenderUnit renderUnit) =>
+        new RenderUnitNode<RenderUnit>(renderUnit, new ObservableValue(0));
 
-    makeOpaqueUnitGroupNode() =>
-        new RenderUnitGroupNode(new StaticSortCode(0), makeOpaqueUnitNode);
+    makeOpaqueUnitGroupNode(Program program) =>
+        new RenderUnitGroupNode<RenderUnit>(
+            new StaticSortCode(0), makeOpaqueUnitNode);
 
-    final opaqueBranch = new ProgramBranchingNode(
-        new StaticSortCode(0), makeOpaqueUnitGroupNode);
+    final opaqueBranch = new GroupingNode<RenderUnit, Program>(
+        (u) => u.program, makeOpaqueUnitGroupNode, new StaticSortCode(0));
 
-    makeTranslucentUnitNode(AtomicRenderUnit renderUnit) {
-      if (renderUnit is SquaredDistanceSortable) {
-        return new RenderUnitNode(renderUnit, renderUnit.squaredDistance);
-      } else {
-        return new RenderUnitNode(renderUnit, new ObservableValue(0));
-      }
-    }
+    makeTranslucentUnitNode(RenderUnit renderUnit) =>
+        new RenderUnitNode(renderUnit, renderUnit.squaredDistance);
 
     final translucentBranch = new RenderUnitGroupNode(
-        new StaticSortCode(0), makeTranslucentUnitNode,
+        new StaticSortCode(1), makeTranslucentUnitNode,
         sortOrder: SortOrder.descending);
 
-    final root = new TranslucencyBranchingNode(opaqueBranch, translucentBranch);
-    final units = new RenderSortTreeUnits(root);
+    final renderTree = new GroupingNode<RenderUnit, bool>(
+        (u) => u.isTranslucent,
+        (isTranslucent) => isTranslucent ? translucentBranch : opaqueBranch,
+        new StaticSortCode(0),
+        defaultValue: false,
+        sortOrder: SortOrder.ascending);
 
-    final program1 = new Program('vertex1', 'fragment1');
-    final program2 = new Program('vertex2', 'fragment2');
+    final units = new SortedRenderUnits<RenderUnit>(renderTree);
+
+    final program1 = new Program();
+    final program2 = new Program();
 
     final unit1 = new RenderUnit(1, true, program1, 4.0);
     final unit2 = new RenderUnit(2, false, program1, 2.0);

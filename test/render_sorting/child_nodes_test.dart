@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
 import 'package:scene_3d/observable_value.dart';
-import 'package:scene_3d/render_sorting.dart';
+import 'package:scene_3d/rendering/realtime/atomic_render_unit.dart';
+import 'package:scene_3d/rendering/realtime/sorting.dart';
 
 class RenderUnit extends AtomicRenderUnit {
   void render() {}

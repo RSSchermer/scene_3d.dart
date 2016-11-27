@@ -1,4 +1,4 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 /// A [View] that does not consist of any [AtomicRenderUnit]s and thus does not
 /// render anything.
@@ -6,13 +6,13 @@ part of bagl_forward_rendering;
 /// Used for objects in a [Scene] for which no geometry should be drawn. For
 /// example, often no geometry needs to be rendered for a scene's cameras or
 /// lights.
-class NullView extends DelegatingIterable<AtomicRenderUnit>
+class NullView extends DelegatingIterable<BaGLRenderUnit>
     implements ObjectView {
   final Object object;
 
   final Scene scene;
 
-  final Iterable<AtomicRenderUnit> delegate = const [];
+  final Iterable<BaGLRenderUnit> delegate = const [];
 
   /// Instantiates a new [NullView] for the given [object].
   NullView(this.object, this.scene);

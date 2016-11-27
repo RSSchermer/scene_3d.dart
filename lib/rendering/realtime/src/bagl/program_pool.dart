@@ -1,4 +1,4 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 class ProgramPool {
   final Map<String, Program> _codePrograms = {};

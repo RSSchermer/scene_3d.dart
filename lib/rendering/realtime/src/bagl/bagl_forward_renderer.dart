@@ -1,15 +1,15 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 class ForwardRenderer {
   final CanvasElement canvas;
 
   final Scene scene;
 
-  final ViewSet _views = new ViewSet(new RenderSortTreeUnits.defaultSorting());
+  final ViewSet _views = _makeDefaultViewSet();
 
   final Map<Object, ObjectView> _objectViews = {};
 
-  ForwardRenderer(this.canvas, this.scene, [ViewFactory viewFactory]) {
+  ForwardRenderer(this.canvas, this.scene, {ViewFactory viewFactory}) {
     final programPool = new ProgramPool();
 
     if (viewFactory == null) {
@@ -19,8 +19,7 @@ class ForwardRenderer {
           new ConstantShapeViewFactory(frame, programPool);
       final lambertViewFactory =
           new LambertShapeViewFactory(frame, programPool);
-      final phongViewFactory =
-          new PhongShapeViewFactory(frame, programPool);
+      final phongViewFactory = new PhongShapeViewFactory(frame, programPool);
       final lightViewFactory = new NullViewFactory((o) => o is Light);
       final cameraViewFactory = new NullViewFactory((o) => o is Camera);
 
@@ -65,4 +64,32 @@ class ForwardRenderer {
       renderUnit.render();
     }
   }
+}
+
+ViewSet _makeDefaultViewSet() {
+  makeOpaqueUnitNode(BaGLRenderUnit renderUnit) =>
+      new RenderUnitNode<BaGLRenderUnit>(renderUnit, new ObservableValue(0));
+
+  makeOpaqueUnitGroupNode(Program program) =>
+      new RenderUnitGroupNode<BaGLRenderUnit>(
+          new StaticSortCode(0), makeOpaqueUnitNode);
+
+  final opaqueBranch = new GroupingNode<BaGLRenderUnit, Program>(
+      (u) => u.program, makeOpaqueUnitGroupNode, new StaticSortCode(0));
+
+  makeTranslucentUnitNode(BaGLRenderUnit renderUnit) =>
+      new RenderUnitNode(renderUnit, renderUnit.squaredDistance);
+
+  final translucentBranch = new RenderUnitGroupNode(
+      new StaticSortCode(1), makeTranslucentUnitNode,
+      sortOrder: SortOrder.descending);
+
+  final renderTree = new GroupingNode<BaGLRenderUnit, bool>(
+      (u) => u.isTranslucent,
+      (isTranslucent) => isTranslucent ? translucentBranch : opaqueBranch,
+      new StaticSortCode(0),
+      defaultValue: false,
+      sortOrder: SortOrder.ascending);
+
+  return new ViewSet(new SortedRenderUnits<BaGLRenderUnit>(renderTree));
 }

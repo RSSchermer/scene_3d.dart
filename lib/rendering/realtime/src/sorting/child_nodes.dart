@@ -1,32 +1,40 @@
-part of render_sorting;
+part of rendering.realtime.sorting;
 
 /// Represent the child nodes of a [BranchingNode].
-abstract class ChildNodes extends Iterable<RenderSortTreeNode> {
+abstract class ChildNodes<U extends AtomicRenderUnit>
+    extends Iterable<RenderTreeNode<U>> {
   /// The [BranchingNode] to which these [ChildNodes] belong.
-  BranchingNode get owner;
+  BranchingNode<U> get owner;
 
   /// The way in which these [ChildNodes] are sorted.
   SortOrder get sortOrder;
 
-  ///
-  factory ChildNodes.unsorted(BranchingNode owner) = _UnsortedChildNodes;
+  /// Creates a new [ChildNodes] instance in which the [RenderTreeNode]s are
+  /// presented in insertion order.
+  factory ChildNodes.unsorted(BranchingNode<U> owner) = _UnsortedChildNodes<U>;
 
-  factory ChildNodes.ascending(BranchingNode owner) = _AscendingChildNodes;
+  /// Creates a new [ChildNodes] instance in which the [RenderTreeNode]s are
+  /// presented in ascending sort code order.
+  factory ChildNodes.ascending(BranchingNode<U> owner) =
+      _AscendingChildNodes<U>;
 
-  factory ChildNodes.descending(BranchingNode owner) = _DescendingChildNodes;
+  /// Creates a new [ChildNodes] instance in which the [RenderTreeNode]s are
+  /// presented in descending sort code order.
+  factory ChildNodes.descending(BranchingNode<U> owner) =
+      _DescendingChildNodes<U>;
 
   /// Adds the [node] to these [ChildNodes].
   ///
   /// Does nothing if the [owner] is already the [node]'s parent.
   ///
   /// Throws a [StateError] if the [node] already has another parent node.
-  void add(RenderSortTreeNode node);
+  void add(RenderTreeNode<U> node);
 
   /// Removes the [node] from these [ChildNodes].
   ///
   /// Returns `true` if the [node] was a child node of the [owner], `false`
   /// otherwise. Leaves the node parentless and without siblings; a root node.
-  bool remove(RenderSortTreeNode node);
+  bool remove(RenderTreeNode<U> node);
 
   /// Sorts the nodes by sort code according to the [sortOrder].
   ///
@@ -40,27 +48,27 @@ abstract class ChildNodes extends Iterable<RenderSortTreeNode> {
 /// New child nodes are inserted in order. However, changes to sort codes at a
 /// later time may degenerate the order of the nodes. Call [sort] to rearrange
 /// the nodes in the expected order.
-class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
-    implements ChildNodes {
-  final BranchingNode owner;
+class _AscendingChildNodes<U extends AtomicRenderUnit>
+    extends IterableBase<RenderTreeNode<U>> implements ChildNodes<U> {
+  final BranchingNode<U> owner;
 
   final SortOrder sortOrder = SortOrder.ascending;
 
-  final Set<RenderSortTreeNode> _needHeadShift = new Set();
-  final Set<RenderSortTreeNode> _needTailShift = new Set();
+  final Set<RenderTreeNode<U>> _needHeadShift = new Set();
+  final Set<RenderTreeNode<U>> _needTailShift = new Set();
 
   /// Creates a new [AscendingChildNodes] instance for the given [owner].
   _AscendingChildNodes(this.owner);
 
   int _length = 0;
 
-  RenderSortTreeNode _initial;
+  RenderTreeNode<U> _initial;
 
-  RenderSortTreeNode _final;
+  RenderTreeNode<U> _final;
 
-  RenderSortTreeNode get first => _initial;
+  RenderTreeNode<U> get first => _initial;
 
-  RenderSortTreeNode get last => _final;
+  RenderTreeNode<U> get last => _final;
 
   bool get isEmpty => _length == 0;
 
@@ -68,9 +76,9 @@ class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
 
   int get length => _length;
 
-  Iterator<RenderSortTreeNode> get iterator => new _ChildNodeIterator(this);
+  Iterator<RenderTreeNode<U>> get iterator => new _ChildNodeIterator<U>(this);
 
-  void add(RenderSortTreeNode node) {
+  void add(RenderTreeNode<U> node) {
     if (node.parentNode == null) {
       node._parentNode = owner;
 
@@ -119,11 +127,12 @@ class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
     } else if (node.parentNode != owner) {
       throw new StateError('Tried to add a node as a child, but the node '
           'already belongs to a different parent. A node can only be a child '
-          'of one parent. Try calling `release` on the node before adding it.');
+          'of one parent. Try calling `disconnect` on the node before adding '
+          'it.');
     }
   }
 
-  bool remove(RenderSortTreeNode node) {
+  bool remove(RenderTreeNode<U> node) {
     if (node.parentNode == owner) {
       final previous = node._previousSibling;
       final next = node._nextSibling;
@@ -175,7 +184,6 @@ class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
           // the node was already in the right position and does not need to be
           // moved.
           if (currentNode != previousSibling) {
-
             // Node does in fact need to be moved so excise it
             if (node == _final) {
               previousSibling._nextSibling = null;
@@ -227,7 +235,6 @@ class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
           // the node was already in the right position and does not need to be
           // moved.
           if (currentNode != nextSibling) {
-
             // Node does in fact need to be moved so excise it
             if (node == _initial) {
               nextSibling._previousSibling = null;
@@ -268,27 +275,27 @@ class _AscendingChildNodes extends IterableBase<RenderSortTreeNode>
 /// New child nodes are inserted in order. However, changes to sort codes at a
 /// later time may degenerate the order of the nodes. Call [sort] to rearrange
 /// the nodes in the expected order.
-class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
-    implements ChildNodes {
-  final BranchingNode owner;
+class _DescendingChildNodes<U extends AtomicRenderUnit>
+    extends IterableBase<RenderTreeNode<U>> implements ChildNodes<U> {
+  final BranchingNode<U> owner;
 
   final SortOrder sortOrder = SortOrder.descending;
 
-  final Set<RenderSortTreeNode> _needHeadShift = new Set();
-  final Set<RenderSortTreeNode> _needTailShift = new Set();
+  final Set<RenderTreeNode<U>> _needHeadShift = new Set();
+  final Set<RenderTreeNode<U>> _needTailShift = new Set();
 
   /// Creates a new [AscendingChildNodes] instance for the given [owner].
   _DescendingChildNodes(this.owner);
 
   int _length = 0;
 
-  RenderSortTreeNode _initial;
+  RenderTreeNode<U> _initial;
 
-  RenderSortTreeNode _final;
+  RenderTreeNode<U> _final;
 
-  RenderSortTreeNode get first => _initial;
+  RenderTreeNode<U> get first => _initial;
 
-  RenderSortTreeNode get last => _final;
+  RenderTreeNode<U> get last => _final;
 
   bool get isEmpty => _length == 0;
 
@@ -296,9 +303,9 @@ class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
 
   int get length => _length;
 
-  Iterator<RenderSortTreeNode> get iterator => new _ChildNodeIterator(this);
+  Iterator<RenderTreeNode<U>> get iterator => new _ChildNodeIterator<U>(this);
 
-  void add(RenderSortTreeNode node) {
+  void add(RenderTreeNode<U> node) {
     if (node.parentNode == null) {
       node._parentNode = owner;
 
@@ -347,11 +354,12 @@ class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
     } else if (node.parentNode != owner) {
       throw new StateError('Tried to add a node as a child, but the node '
           'already belongs to a different parent. A node can only be a child '
-          'of one parent. Try calling `release` on the node before adding it.');
+          'of one parent. Try calling `disconnect` on the node before adding '
+          'it.');
     }
   }
 
-  bool remove(RenderSortTreeNode node) {
+  bool remove(RenderTreeNode<U> node) {
     if (node.parentNode == owner) {
       final previous = node._previousSibling;
       final next = node._nextSibling;
@@ -403,7 +411,6 @@ class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
           // the node was already in the right position and does not need to be
           // moved.
           if (currentNode != previousSibling) {
-
             // Node does in fact need to be moved so excise it
             if (node == _final) {
               previousSibling._nextSibling = null;
@@ -455,7 +462,6 @@ class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
           // the node was already in the right position and does not need to be
           // moved.
           if (currentNode != nextSibling) {
-
             // Node does in fact need to be moved so excise it
             if (node == _initial) {
               nextSibling._previousSibling = null;
@@ -492,26 +498,26 @@ class _DescendingChildNodes extends IterableBase<RenderSortTreeNode>
 
 /// An implementation of [ChildNodes] that presents the children in insertion
 /// order.
-class _UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
-    implements ChildNodes {
-  final BranchingNode owner;
+class _UnsortedChildNodes<U extends AtomicRenderUnit>
+    extends IterableBase<RenderTreeNode<U>> implements ChildNodes<U> {
+  final BranchingNode<U> owner;
 
   final SortOrder sortOrder = SortOrder.unsorted;
 
   int _length = 0;
 
-  RenderSortTreeNode _initial;
+  RenderTreeNode _initial;
 
-  RenderSortTreeNode _final;
+  RenderTreeNode _final;
 
   /// Creates a new [UnsortedChildNodes] instance for the given [owner].
   _UnsortedChildNodes(this.owner);
 
-  RenderSortTreeNode get first => _initial;
+  RenderTreeNode<U> get first => _initial;
 
-  RenderSortTreeNode get last => _final;
+  RenderTreeNode<U> get last => _final;
 
-  Iterator<RenderSortTreeNode> get iterator => new _ChildNodeIterator(this);
+  Iterator<RenderTreeNode<U>> get iterator => new _ChildNodeIterator<U>(this);
 
   bool get isEmpty => _length == 0;
 
@@ -519,7 +525,7 @@ class _UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
 
   int get length => _length;
 
-  void add(RenderSortTreeNode node) {
+  void add(RenderTreeNode<U> node) {
     if (node.parentNode == null) {
       node._parentNode = owner;
 
@@ -538,11 +544,12 @@ class _UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
     } else if (node.parentNode != owner) {
       throw new StateError('Tried to add a node as a child, but the node '
           'already belongs to a different parent. A node can only be a child '
-          'of one parent. Try calling `release` on the node before adding it.');
+          'of one parent. Try calling `disconnect` on the node before adding '
+          'it.');
     }
   }
 
-  bool remove(RenderSortTreeNode node) {
+  bool remove(RenderTreeNode<U> node) {
     if (node.parentNode == owner) {
       final previous = node._previousSibling;
       final next = node._nextSibling;
@@ -573,18 +580,19 @@ class _UnsortedChildNodes extends IterableBase<RenderSortTreeNode>
   void sort() {}
 }
 
-class _ChildNodeIterator implements Iterator<RenderSortTreeNode> {
-  final ChildNodes nodes;
+class _ChildNodeIterator<U extends AtomicRenderUnit>
+    implements Iterator<RenderTreeNode<U>> {
+  final ChildNodes<U> nodes;
 
-  RenderSortTreeNode _currentNode;
+  RenderTreeNode<U> _currentNode;
 
   _ChildNodeIterator(this.nodes);
 
-  RenderSortTreeNode get current => _currentNode;
+  RenderTreeNode<U> get current => _currentNode;
 
   bool moveNext() {
     _currentNode =
-    _currentNode == null ? nodes.first : _currentNode._nextSibling;
+        _currentNode == null ? nodes.first : _currentNode._nextSibling;
 
     return _currentNode != null;
   }

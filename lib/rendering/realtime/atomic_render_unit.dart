@@ -1,4 +1,4 @@
-part of render_sorting;
+library rendering.realtime.atomic_render_unit;
 
 /// Atomic unit of rendering.
 ///

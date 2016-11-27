@@ -1,11 +1,11 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 class PhongShapeRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
-      INLINE_ASSET('../../shaders/phong_vertex.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/phong_vertex.glsl');
 
   static final String fragmentShaderSource =
-      INLINE_ASSET('../../shaders/phong_fragment.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/phong_fragment.glsl');
 
   final PhongTrianglesShape shape;
 
@@ -275,7 +275,7 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class PhongShapeView extends DelegatingIterable<AtomicRenderUnit>
+class PhongShapeView extends DelegatingIterable<BaGLRenderUnit>
     implements ObjectView {
   final PhongShapeRenderUnit renderUnit;
 
@@ -297,7 +297,7 @@ class PhongShapeView extends DelegatingIterable<AtomicRenderUnit>
 
   Object get object => shape;
 
-  Iterable<AtomicRenderUnit> get delegate => [renderUnit];
+  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
 
   ViewChangeRecord update(Camera camera) {
     renderUnit.update(camera);

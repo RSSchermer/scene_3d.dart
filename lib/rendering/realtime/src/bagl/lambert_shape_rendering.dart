@@ -1,11 +1,11 @@
-part of bagl_forward_rendering;
+part of rendering.realtime.bagl;
 
 class LambertShapeRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
-  INLINE_ASSET('../../shaders/lambert_vertex.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/lambert_vertex.glsl');
 
   static final String fragmentShaderSource =
-  INLINE_ASSET('../../shaders/lambert_fragment.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/lambert_fragment.glsl');
 
   final LambertTrianglesShape shape;
 
@@ -226,7 +226,7 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
   void render() {
     final material = shape.material;
-    
+
     if (material.opacity > 0.05) {
       frame.draw(shape.primitives, program.value, _uniforms,
           blending: material.blending,
@@ -244,7 +244,7 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class LambertShapeView extends DelegatingIterable<AtomicRenderUnit>
+class LambertShapeView extends DelegatingIterable<BaGLRenderUnit>
     implements ObjectView {
   final LambertShapeRenderUnit renderUnit;
 
@@ -259,7 +259,7 @@ class LambertShapeView extends DelegatingIterable<AtomicRenderUnit>
   LambertShapeView(LambertTrianglesShape shape, Scene scene, Frame frame,
       ProgramPool programPool)
       : renderUnit =
-  new LambertShapeRenderUnit(shape, scene, frame, programPool),
+            new LambertShapeRenderUnit(shape, scene, frame, programPool),
         shape = shape,
         scene = scene,
         frame = frame,
@@ -267,7 +267,7 @@ class LambertShapeView extends DelegatingIterable<AtomicRenderUnit>
 
   Object get object => shape;
 
-  Iterable<AtomicRenderUnit> get delegate => [renderUnit];
+  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
 
   ViewChangeRecord update(Camera camera) {
     renderUnit.update(camera);

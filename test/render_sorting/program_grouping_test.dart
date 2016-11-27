@@ -114,7 +114,7 @@ void main() {
         group('after the second render unit\'s program is changed to be equal to the first render unit\'s program', () {
           renderUnit2.program.value = program1;
 
-          node.sortTree();
+          node.sort();
 
           test('results in 1 branch with 2 children', () {
             expect(node.children.length, equals(1));
@@ -133,7 +133,7 @@ void main() {
         group('after the second render unit\'s program is changed to be different from the first render unit\'s program', () {
           renderUnit3.program.value = program2;
 
-          node.sortTree();
+          node.sort();
 
           test('results in 2 branches', () {
             expect(node.children.length, equals(2));
@@ -161,7 +161,7 @@ void main() {
       node.process(renderUnit4);
       node.process(renderUnit5);
 
-      final copy = node.toRenderSortTree();
+      final copy = node.toRenderTree();
 
       test('results in a new node with the correct branches', () {
         expect(copy.children.length, equals(3));
