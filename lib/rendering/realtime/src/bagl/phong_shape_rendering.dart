@@ -1,13 +1,17 @@
 part of rendering.realtime.bagl;
 
-class PhongShapeRenderUnit extends BaGLRenderUnit {
+class PhongRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/phong_vertex.glsl');
 
   static final String fragmentShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/phong_fragment.glsl');
 
-  final PhongTrianglesShape shape;
+  final PhongMaterial material;
+
+  final IndexGeometry primitives;
+
+  final Transform transform;
 
   final Scene scene;
 
@@ -41,7 +45,8 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
 
   bool _programNeedsUpdate = true;
 
-  PhongShapeRenderUnit(this.shape, this.scene, this.frame, this.programPool) {
+  PhongRenderUnit(this.material, this.primitives, this.transform, this.scene,
+      this.frame, this.programPool) {
     final objects = scene.objects;
 
     _directionalLights = objects.where((o) => o is DirectionalLight).toList();
@@ -102,12 +107,10 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
   }
 
   void update(Camera camera) {
-    final material = shape.material;
-
-    _uniforms['uWorld'] = shape.worldTransform;
-    _uniforms['uNormal'] = shape.normalTransform;
-    _uniforms['uViewProjection'] = camera.viewProjectionTransform;
-    _uniforms['uViewDirection'] = camera.viewDirection;
+    _uniforms['uWorld'] = transform.positionToWorld;
+    _uniforms['uNormal'] = transform.directionToWorld;
+    _uniforms['uViewProjection'] = camera.worldToClip;
+    _uniforms['uViewDirection'] = camera.transform.forward * -1.0;
     _uniforms['uOpacity'] = material.opacity;
     _uniforms['uShininess'] = material.shininess;
 
@@ -252,14 +255,13 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
     }
 
     isTranslucent.value = material.opacity < 1.0;
-    squaredDistance.value = squaredDistance3(shape.position, camera.position);
+    squaredDistance.value =
+        squaredDistance3(transform.position, camera.transform.position);
   }
 
   void render() {
-    final material = shape.material;
-
     if (material.opacity > 0.05) {
-      frame.draw(shape.primitives, program.value, _uniforms,
+      frame.draw(primitives, program.value, _uniforms,
           blending: material.blending,
           depthTest: material.depthTest,
           stencilTest: material.stencilTest,
@@ -275,9 +277,9 @@ class PhongShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class PhongShapeView extends DelegatingIterable<BaGLRenderUnit>
-    implements ObjectView {
-  final PhongShapeRenderUnit renderUnit;
+class PhongShapeView extends DelegatingIterable<PhongRenderUnit>
+    implements View<PhongRenderUnit> {
+  final PhongRenderUnit renderUnit;
 
   final PhongTrianglesShape shape;
 
@@ -289,7 +291,8 @@ class PhongShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   PhongShapeView(PhongTrianglesShape shape, Scene scene, Frame frame,
       ProgramPool programPool)
-      : renderUnit = new PhongShapeRenderUnit(shape, scene, frame, programPool),
+      : renderUnit = new PhongRenderUnit(shape.material, shape.primitives,
+            shape.transform, scene, frame, programPool),
         shape = shape,
         scene = scene,
         frame = frame,
@@ -297,23 +300,23 @@ class PhongShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   Object get object => shape;
 
-  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
+  Iterable<PhongRenderUnit> get delegate => [renderUnit];
 
-  ViewChangeRecord update(Camera camera) {
+  ViewChangeRecord<PhongRenderUnit> update(Camera camera) {
     renderUnit.update(camera);
 
     return new ViewChangeRecord.empty();
   }
 }
 
-class PhongShapeViewFactory extends ChainableViewFactory {
+class PhongShapeViewFactory extends ChainableViewFactory<BaGLRenderUnit> {
   final Frame frame;
 
   final ProgramPool programPool;
 
   PhongShapeViewFactory(this.frame, this.programPool);
 
-  ObjectView makeView(Object object, Scene scene) {
+  View<BaGLRenderUnit> makeView(Object object, Scene scene) {
     if (object is PhongTrianglesShape) {
       return new PhongShapeView(object, scene, frame, programPool);
     } else {

@@ -3,11 +3,9 @@ part of lighting;
 class SpotLight implements Light, Struct {
   String name;
 
-  Vector3 position = new Vector3(0.0, 0.0, 0.0);
-
   Vector3 color = new Vector3(1.0, 1.0, 1.0);
 
-  Vector3 direction = new Vector3(0.0, -1.0, 0.0);
+  final Transform transform = new Transform();
 
   double constantAttenuation = 1.0;
 
@@ -48,9 +46,9 @@ class SpotLight implements Light, Struct {
   bool hasMember(String member) => members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
-    f('position', position);
+    f('position', transform.position);
     f('color', color);
-    f('direction', direction);
+    f('direction', transform.forward);
     f('constantAttenuation', constantAttenuation);
     f('linearAttenuation', linearAttenuation);
     f('quadraticAttenuation', quadraticAttenuation);
@@ -60,11 +58,11 @@ class SpotLight implements Light, Struct {
 
   operator [](String member) {
     if (member == 'position') {
-      return position;
+      return transform.position;
     } else if (member == 'color') {
       return color;
     } else if (member == 'direction') {
-      return direction;
+      return transform.forward;
     } else if (member == 'constantAttenuation') {
       return constantAttenuation;
     } else if (member == 'linearAttenuation') {

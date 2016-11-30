@@ -3,6 +3,8 @@ part of camera;
 class PerspectiveCamera implements Camera {
   String name;
 
+  final Transform transform = new Transform();
+
   double _fovVertical;
 
   double _aspectRatio;
@@ -11,19 +13,13 @@ class PerspectiveCamera implements Camera {
 
   double _far;
 
-  Vector3 _position = new Vector3(0.0, 0.0, 0.0);
+  Matrix4 _cameraToClip;
 
-  Quaternion _rotation = new Quaternion(0.0, 0.0, 0.0, 1.0);
+  Matrix4 _worldToCamera;
 
-  Matrix4 _translationMatrix = new Matrix4.identity();
+  Matrix4 _worldToClip;
 
-  Matrix4 _projectionTransform;
-
-  Matrix4 _viewTransform;
-
-  Matrix4 _viewProjectionTransform;
-
-  Vector3 _viewDirection = new Vector3(0.0, 0.0, -1.0);
+  Matrix4 _positionToWorldPrevious;
 
   PerspectiveCamera(
       double fovVertical, double aspectRatio, double near, double far)
@@ -46,8 +42,8 @@ class PerspectiveCamera implements Camera {
 
   void set fovVertical(double value) {
     _fovVertical = value;
-    _projectionTransform = null;
-    _viewProjectionTransform = null;
+    _cameraToClip = null;
+    _worldToClip = null;
   }
 
   /// The `horizontal / vertical` field-of-view aspect ratio.
@@ -55,8 +51,8 @@ class PerspectiveCamera implements Camera {
 
   void set aspectRatio(double value) {
     _aspectRatio = value;
-    _projectionTransform = null;
-    _viewProjectionTransform = null;
+    _cameraToClip = null;
+    _worldToClip = null;
   }
 
   /// The distance to the near viewing plane.
@@ -75,8 +71,8 @@ class PerspectiveCamera implements Camera {
     }
 
     _near = value;
-    _projectionTransform = null;
-    _viewProjectionTransform = null;
+    _cameraToClip = null;
+    _worldToClip = null;
   }
 
   /// The distance to the far viewing plane.
@@ -91,53 +87,31 @@ class PerspectiveCamera implements Camera {
     }
 
     _far = value;
-    _projectionTransform = null;
-    _viewProjectionTransform = null;
-  }
-
-  Vector3 get position => _position;
-
-  void set position(Vector3 value) {
-    _position = value;
-    _translationMatrix = new Matrix4.translation(value.x, value.y, value.z);
-    _viewTransform = null;
-    _viewProjectionTransform = null;
-  }
-
-  Quaternion get rotation => _rotation;
-
-  void set rotation(Quaternion value) {
-    _rotation = value;
-    _viewTransform = null;
-    _viewProjectionTransform = null;
-    _viewDirection = null;
+    _cameraToClip = null;
+    _worldToClip = null;
   }
 
   /// The horizontal field-of-view in radians.
   double get fovHorizontal => _fovVertical * _aspectRatio;
 
-  Matrix4 get viewTransform {
-    _viewTransform ??= (_translationMatrix * rotation.asMatrix4()).inverse;
+  Matrix4 get worldToCamera {
+    if (_worldToCamera == null || !identical(transform.positionToWorld, _positionToWorldPrevious)) {
+      _worldToCamera = transform.positionToWorld.inverse;
+    }
 
-    return _viewTransform;
+    return _worldToCamera;
   }
 
-  Matrix4 get projectionTransform {
-    _projectionTransform ??=
+  Matrix4 get cameraToClip {
+    _cameraToClip ??=
     new Matrix4.perspective(_fovVertical, _aspectRatio, _near, _far);
 
-    return _projectionTransform;
+    return _cameraToClip;
   }
 
-  Matrix4 get viewProjectionTransform {
-    _viewProjectionTransform ??= projectionTransform * viewTransform;
+  Matrix4 get worldToClip {
+    _worldToClip ??= cameraToClip * worldToCamera;
 
-    return _viewProjectionTransform;
-  }
-
-  Vector3 get viewDirection {
-    _viewDirection ??= rotation * new Vector3(0.0, 0.0, -1.0);
-
-    return _viewDirection;
+    return _worldToClip;
   }
 }

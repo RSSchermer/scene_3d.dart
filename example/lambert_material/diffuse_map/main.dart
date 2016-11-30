@@ -15,12 +15,13 @@ import 'package:scene_3d/shape.dart';
 main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new LambertMaterial()
-    ..diffuseMap = new Texture2D.fromImageURL('checkerboard_color_gradient.png');
+    ..diffuseMap =
+        new Texture2D.fromImageURL('checkerboard_color_gradient.png');
   var shape = new LambertTrianglesShape(triangles, material);
   var light = new DirectionalLight()
-    ..direction = new Vector3(0.0, 0.0, -1.0);
+    ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
-    ..position = new Vector3(0.0, 0.0, 20.0);
+    ..transform.translation = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();
 
   scene.objects.addAll([shape, light, camera]);
@@ -29,7 +30,8 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    shape.rotation = new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
+    shape.transform.rotation =
+        new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
 
     renderer.render(camera);
 

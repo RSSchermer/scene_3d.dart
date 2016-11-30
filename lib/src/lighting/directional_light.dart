@@ -5,7 +5,7 @@ class DirectionalLight implements Light, Struct {
 
   Vector3 color = new Vector3(1.0, 1.0, 1.0);
 
-  Vector3 direction = new Vector3(1.0, 0.0, 0.0);
+  final Transform transform = new Transform();
 
   Iterable<String> get members => const ['color', 'direction'];
 
@@ -14,14 +14,14 @@ class DirectionalLight implements Light, Struct {
 
   void forEach(f(String member, dynamic value)) {
     f('color', color);
-    f('direction', direction);
+    f('direction', transform.forward);
   }
 
   operator [](String member) {
     if (member == 'color') {
       return color;
     } else if (member == 'direction') {
-      return direction;
+      return transform.forward;
     } else {
       return null;
     }

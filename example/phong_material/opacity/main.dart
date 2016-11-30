@@ -25,12 +25,12 @@ main() {
     ..opacity = 0.8
     ..opacityMap = new Texture2D.fromImageURL('opacity_map.png');
   var cutout = new PhongTrianglesShape(cutoutTriangles, cutoutMaterial)
-    ..position = new Vector3(0.0, 0.0, 2.0);
+    ..transform.translation = new Vector3(0.0, 0.0, 2.0);
 
   var light = new DirectionalLight()
-    ..direction = new Vector3(0.0, 0.0, -1.0);
+    ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
-    ..position = new Vector3(0.0, 0.0, 20.0);
+    ..transform.translation = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();
 
   scene.objects.addAll([backdrop, cutout, light, camera]);
@@ -39,7 +39,7 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    cutout.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
+    cutout.transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
 
     renderer.render(camera);
 

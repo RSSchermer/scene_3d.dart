@@ -47,7 +47,7 @@ void main() {
         ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
-        expect(camera.viewTransform.values, orderedCloseTo([
+        expect(camera.worldToCamera.values, orderedCloseTo([
           0.70711, 0.5, -0.5, -0.20711,
           0.0, 0.70711, 0.70711, -3.53553,
           0.70711, -0.5, 0.5, -1.20711,
@@ -60,7 +60,7 @@ void main() {
       final camera = new OrthographicCamera(20.0, 1.0, 1.0, 100.0);
 
       test('returns the correct value', () {
-        expect(camera.projectionTransform.values, orderedCloseTo([
+        expect(camera.cameraToClip.values, orderedCloseTo([
           0.05, 0.0, 0.0, -0.0,
           0.0, 0.05, 0.0, -0.0,
           0.0, 0.0, -0.0202, -1.0202,
@@ -75,7 +75,7 @@ void main() {
         ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
-        expect(camera.viewProjectionTransform.values, orderedCloseTo([
+        expect(camera.worldToClip.values, orderedCloseTo([
           0.03536, 0.025, -0.025, -0.01036,
           0.0, 0.03536, 0.03536, -0.17678,
           -0.01428, 0.0101, -0.0101, -0.99582,

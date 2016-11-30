@@ -3,9 +3,9 @@ part of lighting;
 class PointLight implements Light, Struct {
   String name;
 
-  Vector3 position = new Vector3(0.0, 0.0, 0.0);
-
   Vector3 color = new Vector3(1.0, 1.0, 1.0);
+
+  final Transform transform = new Transform();
 
   double constantAttenuation = 1.0;
 
@@ -25,7 +25,7 @@ class PointLight implements Light, Struct {
       members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
-    f('position', position);
+    f('position', transform.position);
     f('color', color);
     f('constantAttenuation', constantAttenuation);
     f('linearAttenuation', linearAttenuation);
@@ -34,7 +34,7 @@ class PointLight implements Light, Struct {
 
   operator [](String member) {
     if (member == 'position') {
-      return position;
+      return transform.position;
     } else if (member == 'color') {
       return color;
     } else if (member == 'constantAttenuation') {

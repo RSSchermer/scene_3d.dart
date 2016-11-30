@@ -1,13 +1,17 @@
 part of rendering.realtime.bagl;
 
-class ConstantShapeRenderUnit extends BaGLRenderUnit {
+class ConstantRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/constant_vertex.glsl');
 
   static final String fragmentShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/constant_fragment.glsl');
 
-  final ConstantTrianglesShape shape;
+  final ConstantMaterial material;
+
+  final IndexGeometry primitives;
+
+  final Transform transform;
 
   final Scene scene;
 
@@ -29,13 +33,12 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
 
   bool _programNeedsUpdate = true;
 
-  ConstantShapeRenderUnit(this.shape, this.scene, this.frame, this.programPool);
+  ConstantRenderUnit(this.material, this.primitives, this.transform, this.scene,
+      this.frame, this.programPool);
 
   void update(Camera camera) {
-    _uniforms['uWorld'] = shape.worldTransform;
-    _uniforms['uViewProjection'] = camera.viewProjectionTransform;
-
-    final material = shape.material;
+    _uniforms['uWorld'] = transform.positionToWorld;
+    _uniforms['uViewProjection'] = camera.worldToClip;
 
     final emissionMap = material.emissionMap;
 
@@ -101,14 +104,13 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
     }
 
     isTranslucent.value = material.opacity < 1.0;
-    squaredDistance.value = squaredDistance3(shape.position, camera.position);
+    squaredDistance.value =
+        squaredDistance3(transform.position, camera.transform.position);
   }
 
   void render() {
-    final material = shape.material;
-
     if (material.opacity > 0.05) {
-      frame.draw(shape.primitives, program.value, _uniforms,
+      frame.draw(primitives, program.value, _uniforms,
           blending: material.blending,
           depthTest: material.depthTest,
           stencilTest: material.stencilTest,
@@ -121,9 +123,9 @@ class ConstantShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class ConstantShapeView extends DelegatingIterable<BaGLRenderUnit>
-    implements ObjectView {
-  final ConstantShapeRenderUnit renderUnit;
+class ConstantShapeView extends DelegatingIterable<ConstantRenderUnit>
+    implements View<ConstantRenderUnit> {
+  final ConstantRenderUnit renderUnit;
 
   final ConstantTrianglesShape shape;
 
@@ -135,8 +137,8 @@ class ConstantShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   ConstantShapeView(ConstantTrianglesShape shape, Scene scene, Frame frame,
       ProgramPool programPool)
-      : renderUnit =
-            new ConstantShapeRenderUnit(shape, scene, frame, programPool),
+      : renderUnit = new ConstantRenderUnit(shape.material, shape.primitives,
+            shape.transform, scene, frame, programPool),
         shape = shape,
         scene = scene,
         frame = frame,
@@ -144,23 +146,23 @@ class ConstantShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   Object get object => shape;
 
-  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
+  Iterable<ConstantRenderUnit> get delegate => [renderUnit];
 
-  ViewChangeRecord update(Camera camera) {
+  ViewChangeRecord<ConstantRenderUnit> update(Camera camera) {
     renderUnit.update(camera);
 
     return new ViewChangeRecord.empty();
   }
 }
 
-class ConstantShapeViewFactory extends ChainableViewFactory {
+class ConstantShapeViewFactory extends ChainableViewFactory<BaGLRenderUnit> {
   final Frame frame;
 
   final ProgramPool programPool;
 
   ConstantShapeViewFactory(this.frame, this.programPool);
 
-  ObjectView makeView(Object object, Scene scene) {
+  View<BaGLRenderUnit> makeView(Object object, Scene scene) {
     if (object is ConstantTrianglesShape) {
       return new ConstantShapeView(object, scene, frame, programPool);
     } else {

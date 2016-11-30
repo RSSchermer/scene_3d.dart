@@ -5,11 +5,12 @@ class ForwardRenderer {
 
   final Scene scene;
 
-  final ViewSet _views = _makeDefaultViewSet();
+  final ViewSet<BaGLRenderUnit> _views = _makeDefaultViewSet();
 
-  final Map<Object, ObjectView> _objectViews = {};
+  final Map<Object, View> _objectViews = {};
 
-  ForwardRenderer(this.canvas, this.scene, {ViewFactory viewFactory}) {
+  ForwardRenderer(this.canvas, this.scene,
+      {ViewFactory<BaGLRenderUnit> viewFactory}) {
     final programPool = new ProgramPool();
 
     if (viewFactory == null) {
@@ -20,8 +21,10 @@ class ForwardRenderer {
       final lambertViewFactory =
           new LambertShapeViewFactory(frame, programPool);
       final phongViewFactory = new PhongShapeViewFactory(frame, programPool);
-      final lightViewFactory = new NullViewFactory((o) => o is Light);
-      final cameraViewFactory = new NullViewFactory((o) => o is Camera);
+      final lightViewFactory =
+          new NullViewFactory<BaGLRenderUnit>((o) => o is Light);
+      final cameraViewFactory =
+          new NullViewFactory<BaGLRenderUnit>((o) => o is Camera);
 
       constantViewFactory.nextFactory = lambertViewFactory;
       lambertViewFactory.nextFactory = phongViewFactory;

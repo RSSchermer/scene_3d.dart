@@ -6,7 +6,7 @@ import 'dart:math';
 import 'package:bagl/math.dart';
 import 'package:bagl/struct.dart';
 
-import 'quaternion.dart';
+import 'transform.dart';
 
 part 'src/lighting/directional_light.dart';
 part 'src/lighting/light.dart';

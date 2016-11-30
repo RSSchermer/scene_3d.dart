@@ -47,7 +47,7 @@ void main() {
         ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
-        expect(camera.viewTransform.values, orderedCloseTo([
+        expect(camera.worldToCamera.values, orderedCloseTo([
           0.70711, 0.5, -0.5, -0.20711,
           0.0, 0.70711, 0.70711, -3.53553,
           0.70711, -0.5, 0.5, -1.20711,
@@ -60,7 +60,7 @@ void main() {
       final camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0);
 
       test('returns the correct value', () {
-        expect(camera.projectionTransform.values, orderedCloseTo([
+        expect(camera.cameraToClip.values, orderedCloseTo([
           1.96261, 0.0, 0.0, 0.0,
           0.0, 1.96261, 0.0, 0.0,
           0.0, 0.0, -1.02020, -2.02020,
@@ -75,7 +75,7 @@ void main() {
         ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
 
       test('returns the correct value', () {
-        expect(camera.viewProjectionTransform.values, orderedCloseTo([
+        expect(camera.worldToClip.values, orderedCloseTo([
           1.38778, 0.98131, -0.98131, -0.40647,
           0.0, 1.38778, 1.38778, -6.93888,
           -0.72139, 0.51010, -0.51010, -0.78871,

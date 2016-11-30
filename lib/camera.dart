@@ -3,7 +3,7 @@ library camera;
 
 import 'package:bagl/math.dart';
 
-import 'quaternion.dart';
+import 'transform.dart';
 
 part 'src/camera/camera.dart';
 part 'src/camera/orthographic_camera.dart';

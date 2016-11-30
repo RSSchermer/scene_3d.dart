@@ -15,10 +15,9 @@ main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new ConstantMaterial()
     ..emissionColor = new Vector3(1.0, 0.0, 0.0);
-  var shape = new ConstantTrianglesShape(triangles, material)
-    ..rotation = new Quaternion.fromEulerAnglesXYZ(0.25 * PI, 0.25 * PI, 0.0);
+  var shape = new ConstantTrianglesShape(triangles, material);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
-    ..position = new Vector3(0.0, 0.0, 20.0);
+    ..transform.translation = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();
 
   scene.objects.addAll([shape, camera]);
@@ -27,7 +26,8 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    shape.rotation = new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
+    shape.transform.rotation =
+        new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
 
     renderer.render(camera);
 

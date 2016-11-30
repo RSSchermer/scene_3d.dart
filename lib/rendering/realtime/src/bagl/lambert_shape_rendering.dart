@@ -1,13 +1,17 @@
 part of rendering.realtime.bagl;
 
-class LambertShapeRenderUnit extends BaGLRenderUnit {
+class LambertRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/lambert_vertex.glsl');
 
   static final String fragmentShaderSource =
       INLINE_ASSET('package:scene_3d/shaders/lambert_fragment.glsl');
 
-  final LambertTrianglesShape shape;
+  final LambertMaterial material;
+
+  final IndexGeometry primitives;
+
+  final Transform transform;
 
   final Scene scene;
 
@@ -39,7 +43,8 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
 
   bool _programNeedsUpdate = true;
 
-  LambertShapeRenderUnit(this.shape, this.scene, this.frame, this.programPool) {
+  LambertRenderUnit(this.material, this.primitives, this.transform, this.scene,
+      this.frame, this.programPool) {
     final objects = scene.objects;
 
     _directionalLights = objects.where((o) => o is DirectionalLight).toList();
@@ -100,11 +105,9 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
   }
 
   void update(Camera camera) {
-    final material = shape.material;
-
-    _uniforms['uWorld'] = shape.worldTransform;
-    _uniforms['uViewProjection'] = camera.viewProjectionTransform;
-    _uniforms['uNormal'] = shape.normalTransform;
+    _uniforms['uWorld'] = transform.positionToWorld;
+    _uniforms['uViewProjection'] = camera.worldToClip;
+    _uniforms['uNormal'] = transform.directionToWorld;
     _uniforms['uOpacity'] = material.opacity;
 
     final diffuseMap = material.diffuseMap;
@@ -221,14 +224,13 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
     }
 
     isTranslucent.value = material.opacity < 1.0;
-    squaredDistance.value = squaredDistance3(shape.position, camera.position);
+    squaredDistance.value =
+        squaredDistance3(transform.position, camera.transform.position);
   }
 
   void render() {
-    final material = shape.material;
-
     if (material.opacity > 0.05) {
-      frame.draw(shape.primitives, program.value, _uniforms,
+      frame.draw(primitives, program.value, _uniforms,
           blending: material.blending,
           depthTest: material.depthTest,
           stencilTest: material.stencilTest,
@@ -244,9 +246,9 @@ class LambertShapeRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class LambertShapeView extends DelegatingIterable<BaGLRenderUnit>
-    implements ObjectView {
-  final LambertShapeRenderUnit renderUnit;
+class LambertShapeView extends DelegatingIterable<LambertRenderUnit>
+    implements View<LambertRenderUnit> {
+  final LambertRenderUnit renderUnit;
 
   final LambertTrianglesShape shape;
 
@@ -258,8 +260,8 @@ class LambertShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   LambertShapeView(LambertTrianglesShape shape, Scene scene, Frame frame,
       ProgramPool programPool)
-      : renderUnit =
-            new LambertShapeRenderUnit(shape, scene, frame, programPool),
+      : renderUnit = new LambertRenderUnit(shape.material, shape.primitives,
+            shape.transform, scene, frame, programPool),
         shape = shape,
         scene = scene,
         frame = frame,
@@ -267,23 +269,23 @@ class LambertShapeView extends DelegatingIterable<BaGLRenderUnit>
 
   Object get object => shape;
 
-  Iterable<BaGLRenderUnit> get delegate => [renderUnit];
+  Iterable<LambertRenderUnit> get delegate => [renderUnit];
 
-  ViewChangeRecord update(Camera camera) {
+  ViewChangeRecord<LambertRenderUnit> update(Camera camera) {
     renderUnit.update(camera);
 
     return new ViewChangeRecord.empty();
   }
 }
 
-class LambertShapeViewFactory extends ChainableViewFactory {
+class LambertShapeViewFactory extends ChainableViewFactory<BaGLRenderUnit> {
   final Frame frame;
 
   final ProgramPool programPool;
 
   LambertShapeViewFactory(this.frame, this.programPool);
 
-  ObjectView makeView(Object object, Scene scene) {
+  View<BaGLRenderUnit> makeView(Object object, Scene scene) {
     if (object is LambertTrianglesShape) {
       return new LambertShapeView(object, scene, frame, programPool);
     } else {

@@ -1,27 +1,26 @@
 part of rendering.realtime.bagl;
 
 /// A collection of [BaGLRenderUnit]s that together render a single object.
-abstract class ObjectView extends Iterable<BaGLRenderUnit> {
-  /// The object represented by this [ObjectView].
+abstract class View<U extends AtomicRenderUnit> extends Iterable<U> {
+  /// The object represented by this [View].
   Object get object;
 
   /// The [Scene] that serves as the context for the [object].
   Scene get scene;
 
-  /// Updates the [AtomicRenderUnit]s that belong to this [ObjectView] to
-  /// reflect the current state of the [object] and its context (e.g. a
-  /// [Scene]).
-  ViewChangeRecord update(Camera camera);
+  /// Updates the [AtomicRenderUnit]s contained in this [View] to reflect the
+  /// current state of the [object] and its context (e.g. a [Scene]).
+  ViewChangeRecord<U> update(Camera camera);
 }
 
-/// Records the [BaGLRenderUnit]s that were added or removed from an
-/// [ObjectView].
-class ViewChangeRecord {
+/// Records the [AtomicRenderUnit]s that were added or removed from an
+/// [View].
+class ViewChangeRecord<U extends AtomicRenderUnit> {
   /// The [AtomicRenderUnit]s that were added as part of this change.
-  final Set<BaGLRenderUnit> additions;
+  final Set<U> additions;
 
   /// The [AtomicRenderUnit]s that were removed as part of this change.
-  final Set<BaGLRenderUnit> removals;
+  final Set<U> removals;
 
   /// Instantiates a new [ViewChangeRecord] for a change with the given
   /// [additions] and [removals].
@@ -32,28 +31,29 @@ class ViewChangeRecord {
         removals = new Set();
 }
 
-/// A set of [ObjectView]s.
+/// A set of [View]s.
 ///
-/// Collects the [AtomicRenderUnit]s contained in the [ObjectView]s in its
+/// Collects the [AtomicRenderUnit]s contained in the [View]s in its
 /// [renderBin].
-class ViewSet extends SetBase<ObjectView> implements Set<ObjectView> {
+class ViewSet<U extends AtomicRenderUnit> extends SetBase<View<U>>
+    implements Set<View<U>> {
   /// The aggregated [AtomicRenderUnit]s of these [ViewSet].
-  final Set<BaGLRenderUnit> renderBin;
+  final Set<U> renderBin;
 
-  final Set<ObjectView> _delegate = new Set();
+  final Set<View<U>> _delegate = new Set();
 
   /// Instantiates a new [ViewSet] instance for the given [renderBin].
   ViewSet(this.renderBin);
 
-  Iterator<ObjectView> get iterator => _delegate.iterator;
+  Iterator<View<U>> get iterator => _delegate.iterator;
 
   int get length => _delegate.length;
 
   bool contains(Object value) => _delegate.contains(value);
 
-  ObjectView lookup(Object value) => _delegate.lookup(value);
+  View<U> lookup(Object value) => _delegate.lookup(value);
 
-  bool add(ObjectView view) {
+  bool add(View<U> view) {
     final success = _delegate.add(view);
 
     if (success) {
@@ -73,7 +73,7 @@ class ViewSet extends SetBase<ObjectView> implements Set<ObjectView> {
     return success;
   }
 
-  /// Updates all of the [ObjectView]s contained in these [ViewSet].
+  /// Updates all of the [View]s contained in these [ViewSet].
   void update(Camera camera) {
     for (var view in _delegate) {
       final changes = view.update(camera);
@@ -83,27 +83,28 @@ class ViewSet extends SetBase<ObjectView> implements Set<ObjectView> {
     }
   }
 
-  ViewSet toSet() => new ViewSet(new Set()..addAll(renderBin));
+  ViewSet<U> toSet() => new ViewSet<U>(new Set()..addAll(renderBin));
 }
 
 /// Creates [View]s for objects in a scene.
-abstract class ViewFactory {
+abstract class ViewFactory<U extends AtomicRenderUnit> {
   /// Creates a new [View] for the [object] in the context of the [scene].
   ///
   /// Throws an [ArgumentError] if this [ViewFactory] is unable to make a [View]
   /// for the [object].
-  ObjectView makeView(Object object, Scene scene);
+  View<U> makeView(Object object, Scene scene);
 }
 
 /// Chainable [ViewFactory].
 ///
 /// If a [ChainableViewFactory] is process a [makeView] request for an object,
 /// it will pass the request along to its [nextFactory].
-abstract class ChainableViewFactory extends ViewFactory {
+abstract class ChainableViewFactory<U extends AtomicRenderUnit>
+    extends ViewFactory<U> {
   /// The next [ViewFactory] that a [makeView] will be passed to.
-  ViewFactory nextFactory;
+  ViewFactory<U> nextFactory;
 
-  ObjectView makeView(Object object, Scene scene) {
+  View<U> makeView(Object object, Scene scene) {
     if (nextFactory != null) {
       return nextFactory.makeView(object, scene);
     } else {
