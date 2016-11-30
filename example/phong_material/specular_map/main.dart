@@ -33,7 +33,8 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    shape.transform.rotation = new Quaternion.fromEulerAnglesXYZ(-0.25 * PI - sin(time / 1000) * 0.25 * PI, 0.0, 0.0);
+    shape.transform.rotation = new Quaternion.fromEulerAnglesXYZ(
+        -0.25 * PI - sin(time / 1000) * 0.25 * PI, 0.0, 0.0);
 
     renderer.render(camera);
 

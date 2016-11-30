@@ -14,8 +14,7 @@ import 'package:scene_3d/shape.dart';
 
 main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
-  var material = new PhongMaterial()
-    ..diffuseColor = new Vector3(1.0, 0.0, 0.0);
+  var material = new PhongMaterial()..diffuseColor = new Vector3(1.0, 0.0, 0.0);
   var shape = new PhongTrianglesShape(triangles, material);
   var light = new DirectionalLight()
     ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);
@@ -29,7 +28,8 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    shape.transform.rotation = new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
+    shape.transform.rotation =
+        new Quaternion.fromEulerAnglesXYZ(time / 1000, time / 1000, 0.0);
 
     renderer.render(camera);
 
