@@ -258,6 +258,34 @@ void main() {
           ], 0.00001));
         });
       });
+
+      group('toString', () {
+        final quaternion = new Quaternion(1.0, 2.0, 3.0, 4.0);
+
+        test('returns the correct value', () {
+          expect(quaternion.toString(), equals('Quaternion(1.0, 2.0, 3.0, 4.0)'));
+        });
+      });
+
+      group('== operator', () {
+        group('with another Quaterion that has the same x, y, z and w values', () {
+          final q1 = new Quaternion(1.0, 2.0, 3.0, 4.0);
+          final q2 = new Quaternion(1.0, 2.0, 3.0, 4.0);
+
+          test('returns true', () {
+            expect(q1 == q2, isTrue);
+          });
+        });
+
+        group('with another Quaterion that has different x, y, z and w values', () {
+          final q1 = new Quaternion(1.0, 2.0, 3.0, 4.0);
+          final q2 = new Quaternion(4.0, 3.0, 2.0, 1.0);
+
+          test('returns false', () {
+            expect(q1 == q2, isFalse);
+          });
+        });
+      });
     });
   });
 }

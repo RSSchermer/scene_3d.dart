@@ -385,4 +385,14 @@ class Quaternion {
           'Quaternion or with a Vector3.');
     }
   }
+
+  String toString() => 'Quaternion($x, $y, $z, $w)';
+
+  bool operator ==(other) =>
+      identical(other, this) ||
+      other is Quaternion &&
+          other.x == x &&
+          other.y == y &&
+          other.z == z &&
+          other.w == w;
 }
