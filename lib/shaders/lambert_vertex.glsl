@@ -37,14 +37,12 @@ void main(void) {
   vPosition = uWorld * aPosition;
   vTexCoord = aTexCoord;
   vIrradiance = vec3(0.0, 0.0, 0.0);
+  vNormal = normalize(uNormal * aNormal);
 
   #ifdef USE_NORMAL_MAP
-    vTangent = uNormal * aTangent;
-    vBitangent = uNormal * aBitangent;
-    vNormal = uNormal * aNormal;
+    vTangent = normalize(uNormal * aTangent);
+    vBitangent = normalize(uNormal * aBitangent);
   #else
-    vNormal = uNormal * aNormal;
-
     #if NUM_DIRECTIONAL_LIGHTS > 0
       for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
         vIrradiance += irradiance(uDirectionalLights[i], vNormal);

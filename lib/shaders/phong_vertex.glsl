@@ -21,11 +21,11 @@ varying vec3 vNormal;
 void main(void) {
   vPosition = uWorld * aPosition;
   vTexCoord = aTexCoord;
-  vNormal = uNormal * aNormal;
+  vNormal = normalize(uNormal * aNormal);
 
   #ifdef USE_NORMAL_MAP
-    vTangent = uNormal * aTangent;
-    vBitangent = uNormal * aBitangent;
+    vTangent = normalize(uNormal * aTangent);
+    vBitangent = normalize(uNormal * aBitangent);
   #endif
 
   gl_Position = uViewProjection * vPosition;
