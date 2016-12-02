@@ -179,9 +179,9 @@ void main() {
     });
 
     group('instance', () {
-      group('unit', () {
+      group('unitQuaternion', () {
         final quaternion = new Quaternion(1.0, 2.0, 3.0, 4.0);
-        final unit = quaternion.unit;
+        final unit = quaternion.unitQuaternion;
 
         test('returns a quaternion with the correct x value', () {
           expect(unit.x, closeTo(0.18257, 0.00001));

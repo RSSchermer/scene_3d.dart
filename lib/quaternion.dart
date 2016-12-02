@@ -218,10 +218,10 @@ class Quaternion {
         cosX * cosY * cosZ + sinX * sinY * sinZ);
   }
 
-  /// The unit [Quaternion] of this [Quaternion].
+  /// Returns this [Quaternion]'s unit [Quaternion].
   ///
   /// A normalized version of this [Quaternion] with a magnitude of `1`.
-  Quaternion get unit {
+  Quaternion get unitQuaternion {
     if (_unit == null) {
       _squareSum ??= pow(x, 2) + pow(y, 2) + pow(z, 2) + pow(w, 2);
 
