@@ -2,8 +2,7 @@
 library scene;
 
 import 'package:bagl/math.dart';
-
-import 'observable_set.dart';
+import 'package:observable/observable.dart';
 
 class Scene {
   final ObservableSet<Object> objects = new ObservableSet();

@@ -41,20 +41,20 @@ class ForwardRenderer {
       _objectViews[object] = view;
     }
 
-    scene.objects.changes.listen((change) {
-      for (var object in change.additions) {
-        final view = viewFactory.makeView(object, scene);
+    scene.objects.changes.listen((changes) {
+      for (var change in changes) {
+        if (change.isAdd) {
+          final view = viewFactory.makeView(change.element, scene);
 
-        _views.add(view);
-        _objectViews[object] = view;
-      }
+          _views.add(view);
+          _objectViews[change.element] = view;
+        } else {
+          final view = _objectViews[change.element];
 
-      for (var object in change.removals) {
-        final view = _objectViews[object];
-
-        if (view != null) {
-          _views.remove(view);
-          _objectViews.remove(view);
+          if (view != null) {
+            _views.remove(view);
+            _objectViews.remove(view);
+          }
         }
       }
     });

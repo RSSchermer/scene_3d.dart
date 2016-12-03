@@ -65,41 +65,43 @@ class PhongRenderUnit extends BaGLRenderUnit {
       _uniforms['uSpotLights'] = _spotLights;
     }
 
-    objects.changes.listen((change) {
-      for (var object in change.additions) {
-        if (object is DirectionalLight) {
-          _directionalLights.add(object);
-          _uniforms['uDirectionalLights'] = _directionalLights;
-          _programNeedsUpdate = true;
-        } else if (object is PointLight) {
-          _pointLights.add(object);
-          _uniforms['uPointLights'] = _pointLights;
-          _programNeedsUpdate = true;
-        } else if (object is SpotLight) {
-          _spotLights.add(object);
-          _uniforms['uSpotLights'] = _spotLights;
-          _programNeedsUpdate = true;
-        }
-      }
+    objects.changes.listen((changes) {
+      for (var change in changes) {
+        final object = change.element;
 
-      for (var object in change.removals) {
-        if (object is DirectionalLight) {
-          _programNeedsUpdate = _directionalLights.remove(object);
-
-          if (_directionalLights.isEmpty) {
-            _uniforms.remove('uDirectionalLights');
+        if (change.isAdd) {
+          if (object is DirectionalLight) {
+            _directionalLights.add(object);
+            _uniforms['uDirectionalLights'] = _directionalLights;
+            _programNeedsUpdate = true;
+          } else if (object is PointLight) {
+            _pointLights.add(object);
+            _uniforms['uPointLights'] = _pointLights;
+            _programNeedsUpdate = true;
+          } else if (object is SpotLight) {
+            _spotLights.add(object);
+            _uniforms['uSpotLights'] = _spotLights;
+            _programNeedsUpdate = true;
           }
-        } else if (object is PointLight) {
-          _programNeedsUpdate = _pointLights.remove(object);
+        } else {
+          if (object is DirectionalLight) {
+            _programNeedsUpdate = _directionalLights.remove(object);
 
-          if (_pointLights.isEmpty) {
-            _uniforms.remove('uPointLights');
-          }
-        } else if (object is SpotLight) {
-          _programNeedsUpdate = _spotLights.remove(object);
+            if (_directionalLights.isEmpty) {
+              _uniforms.remove('uDirectionalLights');
+            }
+          } else if (object is PointLight) {
+            _programNeedsUpdate = _pointLights.remove(object);
 
-          if (_spotLights.isEmpty) {
-            _uniforms.remove('uSpotLights');
+            if (_pointLights.isEmpty) {
+              _uniforms.remove('uPointLights');
+            }
+          } else if (object is SpotLight) {
+            _programNeedsUpdate = _spotLights.remove(object);
+
+            if (_spotLights.isEmpty) {
+              _uniforms.remove('uSpotLights');
+            }
           }
         }
       }
