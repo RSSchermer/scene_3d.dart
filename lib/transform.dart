@@ -41,8 +41,11 @@ class Transform {
     }
 
     _parentTransform = value;
-    value._childTransforms.add(this);
     _clearCacheParentDerived();
+
+    if (value != null) {
+      value._childTransforms.add(this);
+    }
   }
 
   /// The translation applied by this [Transform].
@@ -124,7 +127,13 @@ class Transform {
   /// The direction in world space of the x-axis of this [Transform]'s local
   /// space.
   Vector3 get right {
-    _right ??= directionToWorld * new Vector3(1.0, 0.0, 0.0);
+    if (_right == null) {
+      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+        _right = directionToWorld * new Vector3(1.0, 0.0, 0.0);
+      } else {
+        _right = (directionToWorld * new Vector3(1.0, 0.0, 0.0)).unitVector;
+      }
+    }
 
     return _right;
   }
@@ -132,7 +141,13 @@ class Transform {
   /// The direction in world space of the y-axis of this [Transform]'s local
   /// space.
   Vector3 get up {
-    _up ??= directionToWorld * new Vector3(0.0, 1.0, 0.0);
+    if (_up == null) {
+      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+        _up = directionToWorld * new Vector3(0.0, 1.0, 0.0);
+      } else {
+        _up = (directionToWorld * new Vector3(0.0, 1.0, 0.0)).unitVector;
+      }
+    }
 
     return _up;
   }
@@ -140,7 +155,13 @@ class Transform {
   /// The direction in world space of the z-axis of this [Transform]'s local
   /// space.
   Vector3 get forward {
-    _forward ??= directionToWorld * new Vector3(0.0, 0.0, 1.0);
+    if (_forward == null) {
+      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+        _forward = directionToWorld * new Vector3(0.0, 0.0, 1.0);
+      } else {
+        _forward = (directionToWorld * new Vector3(0.0, 0.0, 1.0)).unitVector;
+      }
+    }
 
     return _forward;
   }
@@ -191,7 +212,11 @@ class Transform {
           w.r2c1,
           w.r2c2);
 
-      _directionToWorld = m.inverse.transpose;
+      if (_parentTransform == null && _scaling.x == 1 && _scaling.y == 1 && _scaling.z == 1) {
+        _directionToWorld = m;
+      } else {
+        _directionToWorld = m.inverse.transpose;
+      }
     }
 
     return _directionToWorld;

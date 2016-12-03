@@ -1,5 +1,4 @@
 import 'package:test/test.dart';
-import 'dart:math';
 import 'package:bagl/math.dart';
 import 'package:scene_3d/lighting.dart';
 
@@ -16,7 +15,7 @@ void main() {
           'constantAttenuation',
           'linearAttenuation',
           'quadraticAttenuation',
-          'falloffAngle',
+          'falloffAngleCosine',
           'falloffExponent'
         ]));
       });
@@ -51,8 +50,8 @@ void main() {
         expect(light.hasMember('quadraticAttenuation'), isTrue);
       });
 
-      test('returns true for "falloffAngle"', () {
-        expect(light.hasMember('falloffAngle'), isTrue);
+      test('returns true for "falloffAngleCosine"', () {
+        expect(light.hasMember('falloffAngleCosine'), isTrue);
       });
 
       test('returns true for "falloffExponent"', () {
@@ -74,11 +73,11 @@ void main() {
         expect(calls, unorderedEquals([
           {'member': 'color', 'value': new Vector3(1.0, 1.0, 1.0)},
           {'member': 'position', 'value': new Vector3(0.0, 0.0, 0.0)},
-          {'member': 'direction', 'value': new Vector3(0.0, -1.0, 0.0)},
+          {'member': 'direction', 'value': new Vector3(0.0, 0.0, 1.0)},
           {'member': 'constantAttenuation', 'value': 1.0},
           {'member': 'linearAttenuation', 'value': 0.0},
           {'member': 'quadraticAttenuation', 'value': 0.0},
-          {'member': 'falloffAngle', 'value': PI},
+          {'member': 'falloffAngleCosine', 'value': -1.0},
           {'member': 'falloffExponent', 'value': 0.0}
         ]));
       });
@@ -94,7 +93,7 @@ void main() {
       });
 
       test('with "direction" returns the correct value', () {
-        expect(light['direction'], equals(new Vector3(0.0, -1.0, 0.0)));
+        expect(light['direction'], equals(new Vector3(0.0, 0.0, 1.0)));
       });
 
       test('with "constantAttenuation" returns the correct value', () {
@@ -110,7 +109,7 @@ void main() {
       });
 
       test('with "falloffAngle" returns the correct value', () {
-        expect(light['falloffAngle'], equals(PI));
+        expect(light['falloffAngleCosine'], equals(-1.0));
       });
 
       test('with "falloffExponent" returns the correct value', () {

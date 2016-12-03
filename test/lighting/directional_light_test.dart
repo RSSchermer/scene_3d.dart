@@ -39,7 +39,7 @@ void main() {
       test('calls the callback the correct number of times with the correct values', () {
         expect(calls, unorderedEquals([
           {'member': 'color', 'value': new Vector3(1.0, 1.0, 1.0)},
-          {'member': 'direction', 'value': new Vector3(1.0, 0.0, 0.0)}
+          {'member': 'direction', 'value': new Vector3(0.0, 0.0, 1.0)}
         ]));
       });
     });
@@ -50,7 +50,7 @@ void main() {
       });
 
       test('with "direction" returns the correct value', () {
-        expect(light['direction'], equals(new Vector3(1.0, 0.0, 0.0)));
+        expect(light['direction'], equals(new Vector3(0.0, 0.0, 1.0)));
       });
 
       test('with a nonexisting member name returns null', () {
