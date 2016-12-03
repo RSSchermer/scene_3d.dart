@@ -23,7 +23,9 @@ class Quaternion {
 
   double _squareSum;
 
-  Quaternion _unit;
+  double _magnitude;
+
+  Quaternion _unitQuaternion;
 
   Matrix3 _matrix3;
 
@@ -218,24 +220,59 @@ class Quaternion {
         cosX * cosY * cosZ + sinX * sinY * sinZ);
   }
 
-  /// Returns this [Quaternion]'s unit [Quaternion].
-  ///
-  /// A normalized version of this [Quaternion] with a magnitude of `1`.
-  Quaternion get unitQuaternion {
-    if (_unit == null) {
-      _squareSum ??= pow(x, 2) + pow(y, 2) + pow(z, 2) + pow(w, 2);
+  /// The magnitude of this [Quaternion].
+  double get magnitude {
+    if (_magnitude == null) {
+      _squareSum ??= x * x + y * y + z * z + w * w;
 
       if ((_squareSum - 1).abs() < 0.0001) {
-        _unit = new Quaternion(x, y, z, w);
+        _magnitude = 1.0;
       } else {
-        final magnitude = sqrt(_squareSum);
-
-        _unit = new Quaternion(
-            x / magnitude, y / magnitude, z / magnitude, w / magnitude);
+        _magnitude = sqrt(_squareSum);
       }
     }
 
-    return _unit;
+    return _magnitude;
+  }
+
+  /// This [Quaternion]'s unit quaternion.
+  ///
+  /// A normalized version of this [Quaternion] with a magnitude of `1`.
+  Quaternion get unitQuaternion {
+    if (_unitQuaternion == null) {
+      if (_magnitude != null) {
+        if (_magnitude == 1.0) {
+          _unitQuaternion = new Quaternion(x, y, z, w);
+        } else {
+          _unitQuaternion = new Quaternion(
+              x / _magnitude, y / _magnitude, z / _magnitude, w / _magnitude);
+        }
+      } else {
+        _squareSum ??= x * x + y * y + z * z + w * w;
+
+        if ((_squareSum - 1).abs() < 0.0001) {
+          _unitQuaternion = new Quaternion(x, y, z, w);
+        } else {
+          _magnitude ??= sqrt(_squareSum);
+
+          _unitQuaternion = new Quaternion(
+              x / _magnitude, y / _magnitude, z / _magnitude, w / _magnitude);
+        }
+      }
+    }
+
+    return _unitQuaternion;
+  }
+
+  /// Whether or not this [Quaternion] is a unit quaternion.
+  bool get isUnit {
+    if (_magnitude != null) {
+      return _magnitude == 1.0;
+    } else {
+      _squareSum ??= x * x + y * y + z * z + w * w;
+
+      return (_squareSum - 1).abs() < 0.0001;
+    }
   }
 
   /// Returns a [Matrix3] that represents this [Quaternion]'s rotation as a
