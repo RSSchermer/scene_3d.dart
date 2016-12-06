@@ -9,7 +9,7 @@ class ConstantRenderUnit extends BaGLRenderUnit {
 
   final ConstantMaterial material;
 
-  final IndexGeometry primitives;
+  final PrimitiveSequence primitives;
 
   final Transform transform;
 

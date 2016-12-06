@@ -9,7 +9,7 @@ class PhongRenderUnit extends BaGLRenderUnit {
 
   final PhongMaterial material;
 
-  final IndexGeometry primitives;
+  final PrimitiveSequence primitives;
 
   final Transform transform;
 

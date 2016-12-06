@@ -1,6 +1,6 @@
 library geometry_generators;
 
-import 'package:bagl/index_geometry.dart';
+import 'package:bagl/geometry.dart';
 import 'package:bagl/math.dart';
 import 'package:bagl/vertex_data.dart';
 
@@ -32,7 +32,7 @@ Triangles generateQuadTriangles(double width, double height) {
     'bitangent': new Vector3Attribute(attributeData, offset: 12)
   });
 
-  return new Triangles(vertices, new IndexList.incrementing(6));
+  return new Triangles(vertices);
 }
 
 Triangles generateBoxTriangles(double width, double height, double depth) {
@@ -116,5 +116,5 @@ Triangles generateBoxTriangles(double width, double height, double depth) {
     'bitangent': new Vector3Attribute(attributeData, offset: 12)
   });
 
-  return new Triangles(vertices, new IndexList.incrementing(36));
+  return new Triangles(vertices);
 }

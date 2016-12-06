@@ -12,7 +12,7 @@ abstract class PrimitivesShape {
 
   /// The sequence of geometric primitives that makes up this
   /// [PrimitivesShape].
-  IndexGeometry get primitives;
+  PrimitiveSequence get primitives;
 
   Transform get transform;
 
@@ -24,7 +24,7 @@ abstract class PrimitivesShape {
 class ProgramPrimitivesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry primitives;
+  final PrimitiveSequence primitives;
 
   final ProgramMaterial material;
 
@@ -40,7 +40,7 @@ class ProgramPrimitivesShape implements PrimitivesShape {
 class PointsShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Point> primitives;
+  final PrimitiveSequence<Point> primitives;
 
   final PointMaterial material;
 
@@ -49,10 +49,10 @@ class PointsShape implements PrimitivesShape {
   /// Instantiates a new [PointsShape] from the [primitives] and the
   /// [material].
   PointsShape(this.primitives, this.material) {
-    if (!primitives.vertices.hasAttribute('position')) {
+    if (!primitives.vertexArray.hasAttribute('position')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"position" attribute.');
-    } else if (!primitives.vertices.hasAttribute('color')) {
+    } else if (!primitives.vertexArray.hasAttribute('color')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"color" attribute.');
     }
@@ -64,7 +64,7 @@ class PointsShape implements PrimitivesShape {
 class LinesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Line> primitives;
+  final PrimitiveSequence<Line> primitives;
 
   final LineMaterial material;
 
@@ -73,10 +73,10 @@ class LinesShape implements PrimitivesShape {
   /// Instantiates a new [LineMaterial] from the [primitives] and the
   /// [material].
   LinesShape(this.primitives, this.material) {
-    if (!primitives.vertices.hasAttribute('position')) {
+    if (!primitives.vertexArray.hasAttribute('position')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"position" attribute.');
-    } else if (!primitives.vertices.hasAttribute('color')) {
+    } else if (!primitives.vertexArray.hasAttribute('color')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"color" attribute.');
     }
@@ -88,7 +88,7 @@ class LinesShape implements PrimitivesShape {
 class ConstantTrianglesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Triangle> primitives;
+  final PrimitiveSequence<Triangle> primitives;
 
   final ConstantMaterial material;
 
@@ -97,10 +97,10 @@ class ConstantTrianglesShape implements PrimitivesShape {
   /// Instantiates a new [ConstantTrianglesShape] from the [primitives] and the
   /// [material].
   ConstantTrianglesShape(this.primitives, this.material) {
-    if (!primitives.vertices.hasAttribute('position')) {
+    if (!primitives.vertexArray.hasAttribute('position')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"position" attribute.');
-    } else if (!primitives.vertices.hasAttribute('texCoord')) {
+    } else if (!primitives.vertexArray.hasAttribute('texCoord')) {
       throw new ArgumentError('The vertices for the primitives must define a '
           '"texCoord" attribute.');
     }
@@ -112,7 +112,7 @@ class ConstantTrianglesShape implements PrimitivesShape {
 class LambertTrianglesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Triangle> primitives;
+  final PrimitiveSequence<Triangle> primitives;
 
   final LambertMaterial material;
 
@@ -128,7 +128,7 @@ class LambertTrianglesShape implements PrimitivesShape {
 class PhongTrianglesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Triangle> primitives;
+  final PrimitiveSequence<Triangle> primitives;
 
   final PhongMaterial material;
 
@@ -144,7 +144,7 @@ class PhongTrianglesShape implements PrimitivesShape {
 class BlinnTrianglesShape implements PrimitivesShape {
   String name;
 
-  final IndexGeometry<Triangle> primitives;
+  final PrimitiveSequence<Triangle> primitives;
 
   final BlinnMaterial material;
 

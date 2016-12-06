@@ -9,7 +9,7 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
   final LambertMaterial material;
 
-  final IndexGeometry primitives;
+  final PrimitiveSequence primitives;
 
   final Transform transform;
 
