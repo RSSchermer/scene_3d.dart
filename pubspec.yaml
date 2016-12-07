@@ -7,9 +7,11 @@ documentation:
 environment:
   sdk: '>=1.19.0 <2.0.0'
 dependencies:
-  bagl: ' ^0.6.0'
+  bagl: ' ^0.6.1'
   inline_assets: '^0.1.0'
   glsl_include_transformer: '^0.1.3'
+  objectivist:
+    git: 'https://github.com/RSSchermer/objectivist.dart.git'
   observable: '^0.20.1'
   quiver: '^0.24.0'
 dev_dependencies:
