@@ -63,10 +63,10 @@ void main(void) {
 
   #ifdef USE_NORMAL_MAP
     mat3 TBN = mat3(vTangent, vBitangent, vNormal);
-    vec3 normal =
-        TBN * (texture2D(uNormalMapSampler, vTexCoord).xyz * 2.0 - 1.0);
+    vec3 normal = normalize(
+        TBN * (texture2D(uNormalMapSampler, vTexCoord).xyz * 2.0 - 1.0));
   #else
-    vec3 normal = vNormal;
+    vec3 normal = normalize(vNormal);
   #endif
 
   #if NUM_DIRECTIONAL_LIGHTS > 0
