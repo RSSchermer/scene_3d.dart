@@ -9,7 +9,7 @@ import 'package:scene_3d/camera.dart';
 import 'package:scene_3d/lighting.dart';
 import 'package:scene_3d/quaternion.dart';
 import 'package:scene_3d/scene.dart';
-import 'package:scene_3d/wavefront_object_parser.dart';
+import 'package:scene_3d/obj_loading.dart';
 
 main() {
   final resource = new Resource('stanford_bunny.obj');

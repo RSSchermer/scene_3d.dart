@@ -13,12 +13,13 @@ import 'package:resource/resource.dart';
 import 'material.dart';
 import 'shape.dart';
 
-Future<Iterable<PrimitivesShape>> loadObjResource(Resource resource) {
-  final builder = new _StatementVisitingShapesBuilder();
+Future<Iterable<PrimitivesShape>> loadObjResource(Resource resource, {PhongMaterial defaultTrianglesMaterial}) {
+  final builder = new _StatementVisitingShapesBuilder(defaultTrianglesMaterial: defaultTrianglesMaterial);
 
   return statementizeObjResourceStreamed(resource).forEach((results) {
     for (var error in results.errors) {
-      print('Error when reading ${resource.uri} (line ${error.lineNumber}): ${error.description}');
+      print(
+          'Error when reading ${resource.uri} (line ${error.lineNumber}): ${error.description}');
     }
 
     for (var statement in results) {
@@ -31,6 +32,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   final int vertexDataChunkSize;
 
   final int indexDataChunkSize;
+
+  int _activeSmoothingGroup = 0;
 
   PhongMaterial _defaultTrianglesMaterial;
 
@@ -46,9 +49,14 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   _ChunkedIndexData _currentTrianglesIndexData;
 
+  Map<VertexNumTriple, int> _numTripleVertexIndexMap = {};
+
   final List<ObjReadingError> _errors = [];
 
-  _StatementVisitingShapesBuilder({this.vertexDataChunkSize: 1000, this.indexDataChunkSize: 3000, PhongMaterial defaultTrianglesMaterial}) {
+  _StatementVisitingShapesBuilder(
+      {this.vertexDataChunkSize: 1000,
+      this.indexDataChunkSize: 3000,
+      PhongMaterial defaultTrianglesMaterial}) {
     _defaultTrianglesMaterial = defaultTrianglesMaterial ?? new PhongMaterial();
     _positionData = new _ChunkedAttributeData(4, vertexDataChunkSize);
     _normalData = new _ChunkedAttributeData(3, vertexDataChunkSize);
@@ -56,15 +64,22 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   }
 
   void visitVStatement(VStatement statement) {
-    _positionData.addRow([statement.x ?? 0.0, statement.y ?? 0.0, statement.z ?? 0.0, statement.w ?? 1.0]);
+    _positionData.addRow([
+      statement.x ?? 0.0,
+      statement.y ?? 0.0,
+      statement.z ?? 0.0,
+      statement.w ?? 1.0
+    ]);
   }
 
   void visitVtStatement(VtStatement statement) {
-    _texCoordData.addRow([statement.u ?? 0.0, statement.v ?? 0.0, statement.w ?? 0.0]);
+    _texCoordData
+        .addRow([statement.u ?? 0.0, statement.v ?? 0.0, statement.w ?? 0.0]);
   }
 
   void visitVnStatement(VnStatement statement) {
-    _normalData.addRow([statement.i ?? 0.0, statement.j ?? 0.0, statement.k ?? 0.0]);
+    _normalData
+        .addRow([statement.i ?? 0.0, statement.j ?? 0.0, statement.k ?? 0.0]);
   }
 
   void visitVpStatement(VpStatement statement) {}
@@ -83,78 +98,116 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   void visitFStatement(FStatement statement) {
     final numTriples = statement.vertexNumTriples.toList();
-    final numTriplesLength = numTriples.length;
 
-    if (numTriplesLength >= 3) {
-      _currentTrianglesAttributeData ??= new _ChunkedAttributeData(9, vertexDataChunkSize);
+    if (numTriples.length >= 3) {
+      _currentTrianglesAttributeData ??=
+          new _ChunkedAttributeData(9, vertexDataChunkSize);
       _currentTrianglesIndexData ??= new _ChunkedIndexData(indexDataChunkSize);
 
-      final startIndex = _currentTrianglesAttributeData.rowCount;
-      var usesFaceNormal = false;
+      final vertexRowIndices = [];
+      var requiresFaceNormal = false;
 
       for (var numTriple in numTriples) {
-        final row = new Float32List(9);
-
         final vNum = numTriple.vNum;
         final vnNum = numTriple.vnNum;
         final vtNum = numTriple.vtNum;
 
-        final positionIndex = vNum < 0 ? _positionData.rowCount + vNum : vNum - 1;
-        final position = _positionData.rowAt(positionIndex);
+        if (vnNum == null) {
+          requiresFaceNormal = true;
+        }
 
-        if (position != null) {
-          row[0] = position[0];
-          row[1] = position[1];
-          row[2] = position[2];
-          row[3] = position[3];
+        var seenIndex = null;
+
+        if (requiresFaceNormal && _activeSmoothingGroup != 0) {
+          final key = new VertexNumTriple(vNum, vtNum, _activeSmoothingGroup);
+
+          seenIndex = _numTripleVertexIndexMap[key];
+        } else if (!requiresFaceNormal) {
+          seenIndex = _numTripleVertexIndexMap[numTriple];
+        }
+
+        if (seenIndex != null) {
+          vertexRowIndices.add(seenIndex);
         } else {
-          _errors.add(new ObjReadingError(statement.lineNumber, 'Invalid `v` reference: $vNum.'));
-        }
+          final row = new Float32List(9);
 
-        if (vnNum != null) {
-          final normalIndex = vnNum < 0 ? _normalData.rowCount + vnNum : vnNum - 1;
-          final normal = _normalData.rowAt(normalIndex);
+          final positionIndex =
+              vNum < 0 ? _positionData.rowCount + vNum : vNum - 1;
+          final position = _positionData.rowAt(positionIndex);
 
-          if (normal != null) {
-            row[4] = normal[0];
-            row[5] = normal[1];
-            row[6] = normal[2];
+          if (position != null) {
+            row[0] = position[0];
+            row[1] = position[1];
+            row[2] = position[2];
+            row[3] = position[3];
           } else {
-            _errors.add(new ObjReadingError(statement.lineNumber, 'Invalid `vn` reference: $vnNum.'));
+            _errors.add(new ObjReadingError(
+                statement.lineNumber, 'Invalid `v` reference: $vNum.'));
           }
-        } else {
-          usesFaceNormal = true;
-        }
 
-        if (vtNum != null) {
-          final texCoordIndex = vtNum < 0 ? _texCoordData.rowCount + vtNum : vtNum - 1;
-          final texCoord = _texCoordData.rowAt(texCoordIndex);
+          if (vnNum != null) {
+            final normalIndex =
+                vnNum < 0 ? _normalData.rowCount + vnNum : vnNum - 1;
+            final normal = _normalData.rowAt(normalIndex);
 
-          if (texCoord != null) {
-            row[7] = texCoord[0];
-            row[8] = texCoord[1];
+            if (normal != null) {
+              row[4] = normal[0];
+              row[5] = normal[1];
+              row[6] = normal[2];
+            } else {
+              _errors.add(new ObjReadingError(
+                  statement.lineNumber, 'Invalid `vn` reference: $vnNum.'));
+            }
+          }
+
+          if (vtNum != null) {
+            final texCoordIndex =
+                vtNum < 0 ? _texCoordData.rowCount + vtNum : vtNum - 1;
+            final texCoord = _texCoordData.rowAt(texCoordIndex);
+
+            if (texCoord != null) {
+              row[7] = texCoord[0];
+              row[8] = texCoord[1];
+            } else {
+              _errors.add(new ObjReadingError(
+                  statement.lineNumber, 'Invalid `vt` reference: $vtNum.'));
+            }
+          }
+
+          _currentTrianglesAttributeData.addRow(row);
+
+          final index = _currentTrianglesAttributeData.rowCount - 1;
+
+          if (requiresFaceNormal && _activeSmoothingGroup != 0) {
+            final key = new VertexNumTriple(vNum, vtNum, _activeSmoothingGroup);
+
+            _numTripleVertexIndexMap[key] = index;
           } else {
-            _errors.add(new ObjReadingError(statement.lineNumber, 'Invalid `vt` reference: $vtNum.'));
+            _numTripleVertexIndexMap[numTriple] = index;
           }
-        }
 
-        _currentTrianglesAttributeData.addRow(row);
+          vertexRowIndices.add(index);
+        }
       }
 
-      for (var i = 2; i < numTriplesLength; i++) {
-        _currentTrianglesIndexData.add(startIndex);
-        _currentTrianglesIndexData.add(startIndex + i - 1);
-        _currentTrianglesIndexData.add(startIndex + i);
+      final vertexCount = vertexRowIndices.length;
+
+      for (var i = 2; i < vertexCount; i++) {
+        _currentTrianglesIndexData.add(vertexRowIndices[0]);
+        _currentTrianglesIndexData.add(vertexRowIndices[i - 1]);
+        _currentTrianglesIndexData.add(vertexRowIndices[i]);
       }
 
-      if (usesFaceNormal) {
+      if (requiresFaceNormal) {
         var normalI = 0.0;
         var normalJ = 0.0;
         var normalK = 0.0;
 
-        for (var i = 0; i < numTriplesLength; i++) {
-          final current = _currentTrianglesAttributeData.rowAt(startIndex + i);
-          final next = _currentTrianglesAttributeData.rowAt(startIndex + (i + 1) % numTriplesLength);
+        for (var i = 0; i < vertexCount; i++) {
+          final current =
+              _currentTrianglesAttributeData.rowAt(vertexRowIndices[i]);
+          final next = _currentTrianglesAttributeData
+              .rowAt(vertexRowIndices[(i + 1) % vertexCount]);
           final currentX = current[0];
           final currentY = current[1];
           final currentZ = current[2];
@@ -167,16 +220,17 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
           normalK += (currentX - nextX) * (currentY + nextY);
         }
 
-        for (var i = 0; i < numTriplesLength; i++) {
-          final row = _currentTrianglesAttributeData.rowAt(startIndex + i);
+        for (var index in vertexRowIndices) {
+          final row = _currentTrianglesAttributeData.rowAt(index);
 
-          row[4] = normalI;
-          row[5] = normalJ;
-          row[6] = normalK;
+          row[4] += normalI;
+          row[5] += normalJ;
+          row[6] += normalK;
         }
       }
     } else {
-      _errors.add(new ObjReadingError(statement.lineNumber, 'An `f` statement must define at least 3 vertices.'));
+      _errors.add(new ObjReadingError(statement.lineNumber,
+          'An `f` statement must define at least 3 vertices.'));
     }
   }
 
@@ -202,7 +256,9 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   void visitGStatement(GStatement statement) {}
 
-  void visitSStatement(SStatement statement) {}
+  void visitSStatement(SStatement statement) {
+    _activeSmoothingGroup = statement.isOn ? statement.smoothingGroup : 0;
+  }
 
   void visitMgStatement(MgStatement statement) {}
 
@@ -240,15 +296,24 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   void _finishCurrentTrianglesShape() {
     if (_currentTrianglesAttributeData != null) {
-      final attributeData = _currentTrianglesAttributeData.asAttributeDataTable();
-      final vertexArray = new VertexArray.fromAttributes(<String, VertexAttribute>{
+      final attributeData =
+          _currentTrianglesAttributeData.asAttributeDataTable();
+      final indexList = _currentTrianglesIndexData.asIndexList();
+      final vertexArray =
+          new VertexArray.fromAttributes(<String, VertexAttribute>{
         'position': new Vector4Attribute(attributeData),
         'normal': new Vector3Attribute(attributeData, offset: 4),
         'texCoord': new Vector2Attribute(attributeData, offset: 7)
       });
-      final primitives = new Triangles(vertexArray);
 
-      _finishedShapes.add(new PhongTrianglesShape(primitives, _defaultTrianglesMaterial));
+      for (var vertex in vertexArray) {
+        vertex['normal'] = vertex['normal'].unitVector;
+      }
+
+      final primitives = new Triangles(vertexArray, indexList: indexList);
+
+      _finishedShapes
+          .add(new PhongTrianglesShape(primitives, _defaultTrianglesMaterial));
     }
   }
 }
@@ -266,7 +331,8 @@ class _ChunkedAttributeData {
 
   _ChunkedAttributeData(this.rowLength, this.chunkLength);
 
-  int get rowCount => _filledChunks.length * chunkLength + _activeChunkFillCount;
+  int get rowCount =>
+      _filledChunks.length * chunkLength + _activeChunkFillCount;
 
   void addRow(List<double> values) {
     _activeChunk ??= new AttributeDataTable(rowLength, chunkLength);
@@ -338,7 +404,8 @@ class _ChunkedIndexData {
 
   _ChunkedIndexData(this.chunkLength);
 
-  int get indexCount => _filledChunks.length * chunkLength + _activeChunkFillCount;
+  int get indexCount =>
+      _filledChunks.length * chunkLength + _activeChunkFillCount;
 
   void add(int index) {
     _activeChunk ??= new Uint16List(chunkLength);
