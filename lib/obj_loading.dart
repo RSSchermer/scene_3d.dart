@@ -13,13 +13,20 @@ import 'package:resource/resource.dart';
 import 'material.dart';
 import 'shape.dart';
 
-Future<Iterable<PrimitivesShape>> loadObjResource(Resource resource, {PhongMaterial defaultTrianglesMaterial}) {
-  final builder = new _StatementVisitingShapesBuilder(defaultTrianglesMaterial: defaultTrianglesMaterial);
+Future<Iterable<PrimitivesShape>> loadObj(String uri,
+        {PhongMaterial defaultTrianglesMaterial}) =>
+    loadObjResource(new Resource(uri),
+        defaultTrianglesMaterial: defaultTrianglesMaterial);
+
+Future<Iterable<PrimitivesShape>> loadObjResource(Resource resource,
+    {PhongMaterial defaultTrianglesMaterial}) {
+  final builder = new _StatementVisitingShapesBuilder(
+      defaultTrianglesMaterial: defaultTrianglesMaterial);
 
   return statementizeObjResourceStreamed(resource).forEach((results) {
     for (var error in results.errors) {
-      print(
-          'Error when reading ${resource.uri} (line ${error.lineNumber}): ${error.description}');
+      print('Error when reading ${resource.uri} (line ${error.lineNumber}): '
+          '${error.description}');
     }
 
     for (var statement in results) {
@@ -35,6 +42,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   int _activeSmoothingGroup = 0;
 
+  String _activeMtl;
+
   PhongMaterial _defaultTrianglesMaterial;
 
   _ChunkedAttributeData _positionData;
@@ -43,13 +52,13 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   _ChunkedAttributeData _texCoordData;
 
-  List<PrimitivesShape> _finishedShapes = [];
+  _ChunkedAttributeData _trianglesAttributeData;
 
-  _ChunkedAttributeData _currentTrianglesAttributeData;
-
-  _ChunkedIndexData _currentTrianglesIndexData;
+  _ChunkedIndexData _trianglesIndexData;
 
   Map<VertexNumTriple, int> _numTripleVertexIndexMap = {};
+
+  List<_ShapeRange> _trianglesRanges = [];
 
   final List<ObjReadingError> _errors = [];
 
@@ -61,6 +70,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
     _positionData = new _ChunkedAttributeData(4, vertexDataChunkSize);
     _normalData = new _ChunkedAttributeData(3, vertexDataChunkSize);
     _texCoordData = new _ChunkedAttributeData(3, vertexDataChunkSize);
+    _trianglesAttributeData = new _ChunkedAttributeData(9, vertexDataChunkSize);
+    _trianglesIndexData = new _ChunkedIndexData(indexDataChunkSize);
   }
 
   void visitVStatement(VStatement statement) {
@@ -100,10 +111,6 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
     final numTriples = statement.vertexNumTriples.toList();
 
     if (numTriples.length >= 3) {
-      _currentTrianglesAttributeData ??=
-          new _ChunkedAttributeData(9, vertexDataChunkSize);
-      _currentTrianglesIndexData ??= new _ChunkedIndexData(indexDataChunkSize);
-
       final vertexRowIndices = [];
       var requiresFaceNormal = false;
 
@@ -174,9 +181,9 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
             }
           }
 
-          _currentTrianglesAttributeData.addRow(row);
+          _trianglesAttributeData.addRow(row);
 
-          final index = _currentTrianglesAttributeData.rowCount - 1;
+          final index = _trianglesAttributeData.rowCount - 1;
 
           if (requiresFaceNormal && _activeSmoothingGroup != 0) {
             final key = new VertexNumTriple(vNum, vtNum, _activeSmoothingGroup);
@@ -193,9 +200,9 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
       final vertexCount = vertexRowIndices.length;
 
       for (var i = 2; i < vertexCount; i++) {
-        _currentTrianglesIndexData.add(vertexRowIndices[0]);
-        _currentTrianglesIndexData.add(vertexRowIndices[i - 1]);
-        _currentTrianglesIndexData.add(vertexRowIndices[i]);
+        _trianglesIndexData.add(vertexRowIndices[0]);
+        _trianglesIndexData.add(vertexRowIndices[i - 1]);
+        _trianglesIndexData.add(vertexRowIndices[i]);
       }
 
       if (requiresFaceNormal) {
@@ -204,9 +211,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
         var normalK = 0.0;
 
         for (var i = 0; i < vertexCount; i++) {
-          final current =
-              _currentTrianglesAttributeData.rowAt(vertexRowIndices[i]);
-          final next = _currentTrianglesAttributeData
+          final current = _trianglesAttributeData.rowAt(vertexRowIndices[i]);
+          final next = _trianglesAttributeData
               .rowAt(vertexRowIndices[(i + 1) % vertexCount]);
           final currentX = current[0];
           final currentY = current[1];
@@ -221,7 +227,7 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
         }
 
         for (var index in vertexRowIndices) {
-          final row = _currentTrianglesAttributeData.rowAt(index);
+          final row = _trianglesAttributeData.rowAt(index);
 
           row[4] += normalI;
           row[5] += normalJ;
@@ -276,7 +282,9 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   void visitUsemapStatement(UsemapStatement statement) {}
 
-  void visitUsemtlStatement(UsemtlStatement statement) {}
+  void visitUsemtlStatement(UsemtlStatement statement) {
+    _finishTrianglesRange();
+  }
 
   void visitMtllibStatement(MtllibStatement statement) {}
 
@@ -289,32 +297,40 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   void visitStechStatement(StechStatement statement) {}
 
   Iterable<PrimitivesShape> build() {
-    _finishCurrentTrianglesShape();
+    final attributeData = _trianglesAttributeData.asAttributeDataTable();
+    final indexList = _trianglesIndexData.asIndexList();
+    final vertexArray =
+        new VertexArray.fromAttributes(<String, VertexAttribute>{
+      'position': new Vector4Attribute(attributeData),
+      'normal': new Vector3Attribute(attributeData, offset: 4),
+      'texCoord': new Vector2Attribute(attributeData, offset: 7)
+    });
 
-    return _finishedShapes;
+    for (var vertex in vertexArray) {
+      vertex['normal'] = vertex['normal'].unitVector;
+    }
+
+    _finishTrianglesRange();
+
+    final shapes = <PrimitivesShape>[];
+
+    for (var range in _trianglesRanges) {
+      final triangles = new Triangles(vertexArray,
+          indexList: indexList, offset: range.offset, count: range.count);
+
+      shapes.add(new PhongTrianglesShape(triangles, _defaultTrianglesMaterial));
+    }
+
+    return shapes;
   }
 
-  void _finishCurrentTrianglesShape() {
-    if (_currentTrianglesAttributeData != null) {
-      final attributeData =
-          _currentTrianglesAttributeData.asAttributeDataTable();
-      final indexList = _currentTrianglesIndexData.asIndexList();
-      final vertexArray =
-          new VertexArray.fromAttributes(<String, VertexAttribute>{
-        'position': new Vector4Attribute(attributeData),
-        'normal': new Vector3Attribute(attributeData, offset: 4),
-        'texCoord': new Vector2Attribute(attributeData, offset: 7)
-      });
+  void _finishTrianglesRange() {
+    final offset = _trianglesRanges.isNotEmpty
+        ? _trianglesRanges.last.offset + _trianglesRanges.last.count
+        : 0;
+    final count = _trianglesIndexData.indexCount - offset;
 
-      for (var vertex in vertexArray) {
-        vertex['normal'] = vertex['normal'].unitVector;
-      }
-
-      final primitives = new Triangles(vertexArray, indexList: indexList);
-
-      _finishedShapes
-          .add(new PhongTrianglesShape(primitives, _defaultTrianglesMaterial));
-    }
+    _trianglesRanges.add(new _ShapeRange(offset, count));
   }
 }
 
@@ -437,4 +453,12 @@ class _ChunkedIndexData {
 
     return indexList;
   }
+}
+
+class _ShapeRange {
+  final int offset;
+
+  final int count;
+
+  _ShapeRange(this.offset, this.count);
 }

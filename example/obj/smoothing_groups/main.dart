@@ -2,7 +2,6 @@ import 'dart:html';
 import 'dart:math';
 
 import 'package:bagl/bagl.dart';
-import 'package:resource/resource.dart';
 
 import 'package:scene_3d/rendering/realtime/bagl.dart';
 import 'package:scene_3d/camera.dart';
@@ -13,10 +12,10 @@ import 'package:scene_3d/scene.dart';
 import 'package:scene_3d/obj_loading.dart';
 
 main() {
-  final resource = new Resource('smooth_cylinder.obj');
-  final material = new PhongMaterial()..specularColor = new Vector3(0.3, 0.3, 0.3);
+  final material = new PhongMaterial()
+    ..specularColor = new Vector3(0.3, 0.3, 0.3);
 
-  loadObjResource(resource, defaultTrianglesMaterial: material).then((shapes) {
+  loadObj('smooth_cylinder.obj', defaultTrianglesMaterial: material).then((shapes) {
     var light = new DirectionalLight()
       ..color = new Vector3(0.9, 0.9, 0.9)
       ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);

@@ -2,7 +2,6 @@ import 'dart:html';
 import 'dart:math';
 
 import 'package:bagl/bagl.dart';
-import 'package:resource/resource.dart';
 
 import 'package:scene_3d/rendering/realtime/bagl.dart';
 import 'package:scene_3d/camera.dart';
@@ -12,9 +11,7 @@ import 'package:scene_3d/scene.dart';
 import 'package:scene_3d/obj_loading.dart';
 
 main() {
-  final resource = new Resource('stanford_bunny.obj');
-
-  loadObjResource(resource).then((shapes) {
+  loadObj('stanford_bunny.obj').then((shapes) {
     var light = new DirectionalLight()
       ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);
     var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
