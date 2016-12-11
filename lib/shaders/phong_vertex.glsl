@@ -10,7 +10,7 @@ varying vec4 vPosition;
 varying vec2 vTexCoord;
 varying vec3 vNormal;
 
-#ifdef USE_NORMAL_MAP
+#if defined(USE_NORMAL_MAP) && defined(PRECOMPUTED_TANGENT_BITANGENT)
   attribute vec3 aTangent;
   attribute vec3 aBitangent;
 
@@ -23,7 +23,7 @@ void main(void) {
   vTexCoord = aTexCoord;
   vNormal = normalize(uNormal * aNormal);
 
-  #ifdef USE_NORMAL_MAP
+  #if defined(USE_NORMAL_MAP) && defined(PRECOMPUTED_TANGENT_BITANGENT)
     vTangent = normalize(uNormal * aTangent);
     vBitangent = normalize(uNormal * aBitangent);
   #endif

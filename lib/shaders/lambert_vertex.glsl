@@ -12,11 +12,13 @@ varying vec3 vNormal;
 varying vec3 vIrradiance;
 
 #ifdef USE_NORMAL_MAP
-  attribute vec3 aTangent;
-  attribute vec3 aBitangent;
+  #ifdef PRECOMPUTED_TANGENT_BITANGENT
+    attribute vec3 aTangent;
+    attribute vec3 aBitangent;
 
-  varying vec3 vTangent;
-  varying vec3 vBitangent;
+    varying vec3 vTangent;
+    varying vec3 vBitangent;
+  #endif
 #else
   #if NUM_DIRECTIONAL_LIGHTS > 0
 
@@ -40,8 +42,10 @@ void main(void) {
   vNormal = normalize(uNormal * aNormal);
 
   #ifdef USE_NORMAL_MAP
-    vTangent = normalize(uNormal * aTangent);
-    vBitangent = normalize(uNormal * aBitangent);
+    #ifdef PRECOMPUTED_TANGENT_BITANGENT
+      vTangent = normalize(uNormal * aTangent);
+      vBitangent = normalize(uNormal * aBitangent);
+    #endif
   #else
     #if NUM_DIRECTIONAL_LIGHTS > 0
       for (int i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {

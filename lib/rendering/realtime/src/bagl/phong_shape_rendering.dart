@@ -47,6 +47,8 @@ class PhongRenderUnit extends BaGLRenderUnit {
 
   PhongRenderUnit(this.material, this.primitives, this.transform, this.scene,
       this.frame, this.programPool) {
+    frame.context.requestExtension('OES_standard_derivatives');
+
     final objects = scene.objects;
 
     _directionalLights = objects.where((o) => o is DirectionalLight).toList();

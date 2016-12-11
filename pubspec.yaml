@@ -7,7 +7,8 @@ documentation:
 environment:
   sdk: '>=1.19.0 <2.0.0'
 dependencies:
-  bagl: ' ^0.6.1'
+  bagl:
+    git: 'https://github.com/RSSchermer/bagl.dart.git'
   inline_assets: '^0.1.0'
   glsl_include_transformer: '^0.1.3'
   objectivist:
