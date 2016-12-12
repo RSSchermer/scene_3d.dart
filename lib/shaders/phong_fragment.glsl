@@ -55,7 +55,6 @@ varying vec3 vNormal;
     varying vec3 vTangent;
     varying vec3 vBitangent;
   #else
-    #extension GL_OES_standard_derivatives : enable
     #include "lib/tangent_to_clip.glsl"
   #endif
 #endif
@@ -70,7 +69,7 @@ void main(void) {
     #ifdef PRECOMPUTED_TANGENT_BITANGENT
       mat3 TBN = mat3(vTangent, vBitangent, vNormal);
     #else
-      mat3 TBN = tangentToClip(vPosition, vNormal);
+      mat3 TBN = tangentToClip(vPosition, vNormal, vTexCoord);
     #endif
 
     vec3 normal = normalize(
