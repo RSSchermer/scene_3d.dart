@@ -16,22 +16,28 @@ class ForwardRenderer {
     if (viewFactory == null) {
       final context = RenderingContext.forCanvas(canvas);
       final frame = context.defaultFrame;
-      final constantViewFactory =
-          new ConstantShapeViewFactory(frame, programPool);
-      final lambertViewFactory =
-          new LambertShapeViewFactory(frame, programPool);
-      final phongViewFactory = new PhongShapeViewFactory(frame, programPool);
+
+      final constantRenderUnitFactory =
+          new ConstantRenderUnitFactory(frame, programPool);
+      final lambertRenderUnitFactory =
+          new LambertRenderUnitFactory(frame, programPool);
+      final phongRenderUnitFactory =
+          new PhongRenderUnitFactory(frame, programPool);
+
+      constantRenderUnitFactory.nextFactory = lambertRenderUnitFactory;
+      lambertRenderUnitFactory.nextFactory = phongRenderUnitFactory;
+
+      final trianglesShapeViewFactory =
+          new TrianglesShapeViewFactory(constantRenderUnitFactory);
       final lightViewFactory =
           new NullViewFactory<BaGLRenderUnit>((o) => o is Light);
       final cameraViewFactory =
           new NullViewFactory<BaGLRenderUnit>((o) => o is Camera);
 
-      constantViewFactory.nextFactory = lambertViewFactory;
-      lambertViewFactory.nextFactory = phongViewFactory;
-      phongViewFactory.nextFactory = lightViewFactory;
+      trianglesShapeViewFactory.nextFactory = lightViewFactory;
       lightViewFactory.nextFactory = cameraViewFactory;
 
-      viewFactory = constantViewFactory;
+      viewFactory = trianglesShapeViewFactory;
     }
 
     for (var object in scene.objects) {

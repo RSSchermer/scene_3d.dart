@@ -318,7 +318,7 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
       final triangles = new Triangles(vertexArray,
           indexList: indexList, offset: range.offset, count: range.count);
 
-      shapes.add(new PhongTrianglesShape(triangles, _defaultTrianglesMaterial));
+      shapes.add(new TrianglesShape(triangles, _defaultTrianglesMaterial));
     }
 
     return shapes;

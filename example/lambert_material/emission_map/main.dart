@@ -17,7 +17,7 @@ main() {
   var material = new LambertMaterial()
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0)
     ..emissionMap = new Texture2D.fromImageURL('emission_dot.png');
-  var shape = new LambertTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var light = new PointLight()
     ..transform.translation = new Vector3(0.0, 0.0, 15.0)
     ..quadraticAttenuation = 0.01;

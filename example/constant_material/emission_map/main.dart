@@ -17,7 +17,7 @@ main() {
     ..emissionColor = new Vector3(1.0, 0.0, 0.0)
     ..emissionMap =
         new Texture2D.fromImageURL('checkerboard_color_gradient.png');
-  var shape = new ConstantTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
     ..transform.translation = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();

@@ -16,7 +16,7 @@ main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new LambertMaterial()
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0);
-  var shape = new LambertTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var light = new PointLight()
     ..transform.translation = new Vector3(0.0, 0.0, 15.0)
     ..quadraticAttenuation = 0.01;

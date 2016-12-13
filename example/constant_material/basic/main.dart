@@ -15,7 +15,7 @@ main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new ConstantMaterial()
     ..emissionColor = new Vector3(1.0, 0.0, 0.0);
-  var shape = new ConstantTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)
     ..transform.translation = new Vector3(0.0, 0.0, 20.0);
   var scene = new Scene();

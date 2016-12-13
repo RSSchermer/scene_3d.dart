@@ -24,7 +24,9 @@ class ViewChangeRecord<U extends AtomicRenderUnit> {
 
   /// Instantiates a new [ViewChangeRecord] for a change with the given
   /// [additions] and [removals].
-  ViewChangeRecord(this.additions, this.removals);
+  ViewChangeRecord(Iterable<U> additions, Iterable<U> removals)
+      : additions = additions.toSet(),
+        removals = removals.toSet();
 
   ViewChangeRecord.empty()
       : additions = new Set(),

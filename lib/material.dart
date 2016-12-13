@@ -18,3 +18,4 @@ part 'src/material/material.dart';
 part 'src/material/phong_material.dart';
 part 'src/material/point_material.dart';
 part 'src/material/program_material.dart';
+part 'src/material/surface_material.dart';

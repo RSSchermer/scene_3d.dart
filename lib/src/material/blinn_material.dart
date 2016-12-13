@@ -1,6 +1,6 @@
 part of material;
 
-class BlinnMaterial implements Material {
+class BlinnMaterial implements SurfaceMaterial {
   String name;
 
   Blending blending;

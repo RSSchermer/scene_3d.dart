@@ -17,14 +17,14 @@ main() {
   var backdropTriangles = generateQuadTriangles(10.0, 10.0);
   var backdropMaterial = new ConstantMaterial()
     ..emissionMap = new Texture2D.fromImageURL('checkerboard_color_gradient.png');
-  var backdrop = new ConstantTrianglesShape(backdropTriangles, backdropMaterial);
+  var backdrop = new TrianglesShape(backdropTriangles, backdropMaterial);
 
   var cutoutTriangles = generateQuadTriangles(10.0, 10.0);
   var cutoutMaterial = new PhongMaterial()
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0)
     ..opacity = 0.8
     ..opacityMap = new Texture2D.fromImageURL('opacity_map.png');
-  var cutout = new PhongTrianglesShape(cutoutTriangles, cutoutMaterial)
+  var cutout = new TrianglesShape(cutoutTriangles, cutoutMaterial)
     ..transform.translation = new Vector3(0.0, 0.0, 2.0);
 
   var light = new DirectionalLight()

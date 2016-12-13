@@ -18,7 +18,7 @@ main() {
   var material = new PhongMaterial()
     ..diffuseMap = new Texture2D.fromImageURL('brick_wall.jpg')
     ..normalMap = new Texture2D.fromImageURL('brick_wall_normal.jpg');
-  var shape = new PhongTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var light = new PointLight()
     ..transform.translation = new Vector3(0.0, 10.0, 10.0)
     ..quadraticAttenuation = 0.01;

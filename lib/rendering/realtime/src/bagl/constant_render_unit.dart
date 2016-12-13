@@ -123,50 +123,20 @@ class ConstantRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class ConstantShapeView extends DelegatingIterable<ConstantRenderUnit>
-    implements View<ConstantRenderUnit> {
-  final ConstantRenderUnit renderUnit;
-
-  final ConstantTrianglesShape shape;
-
-  final Scene scene;
-
+class ConstantRenderUnitFactory extends BaGLRenderUnitFactory {
   final Frame frame;
 
   final ProgramPool programPool;
 
-  ConstantShapeView(ConstantTrianglesShape shape, Scene scene, Frame frame,
-      ProgramPool programPool)
-      : renderUnit = new ConstantRenderUnit(shape.material, shape.primitives,
-            shape.transform, scene, frame, programPool),
-        shape = shape,
-        scene = scene,
-        frame = frame,
-        programPool = programPool;
+  ConstantRenderUnitFactory(this.frame, this.programPool);
 
-  Object get object => shape;
-
-  Iterable<ConstantRenderUnit> get delegate => [renderUnit];
-
-  ViewChangeRecord<ConstantRenderUnit> update(Camera camera) {
-    renderUnit.update(camera);
-
-    return new ViewChangeRecord.empty();
-  }
-}
-
-class ConstantShapeViewFactory extends ChainableViewFactory<BaGLRenderUnit> {
-  final Frame frame;
-
-  final ProgramPool programPool;
-
-  ConstantShapeViewFactory(this.frame, this.programPool);
-
-  View<BaGLRenderUnit> makeView(Object object, Scene scene) {
-    if (object is ConstantTrianglesShape) {
-      return new ConstantShapeView(object, scene, frame, programPool);
+  BaGLRenderUnit makeRenderUnit(Material material, PrimitiveSequence primitives,
+      Transform transform, Scene scene) {
+    if (material is ConstantMaterial) {
+      return new ConstantRenderUnit(
+          material, primitives, transform, scene, frame, programPool);
     } else {
-      return super.makeView(object, scene);
+      return super.makeRenderUnit(material, primitives, transform, scene);
     }
   }
 }

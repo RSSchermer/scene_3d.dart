@@ -15,7 +15,7 @@ import 'package:scene_3d/shape.dart';
 main() {
   var triangles = generateQuadTriangles(15.0, 15.0);
   var material = new PhongMaterial()..diffuseColor = new Vector3(1.0, 0.0, 0.0);
-  var shape = new PhongTrianglesShape(triangles, material)
+  var shape = new TrianglesShape(triangles, material)
     ..transform.translation = new Vector3(0.0, -5.0, 0.0);
   var light = new SpotLight()
     ..transform.translation = new Vector3(0.0, 5.0, 0.0)

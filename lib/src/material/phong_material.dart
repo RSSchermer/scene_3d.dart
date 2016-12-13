@@ -1,6 +1,6 @@
 part of material;
 
-class PhongMaterial implements Material {
+class PhongMaterial implements SurfaceMaterial {
   String name;
 
   Blending blending = const Blending(

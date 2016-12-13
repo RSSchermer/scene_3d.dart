@@ -18,7 +18,7 @@ main() {
   var material = new PhongMaterial()
     ..diffuseMap = new Texture2D.fromImageURL('brick_wall.jpg')
     ..normalMap = new Texture2D.fromImageURL('brick_wall_normal.jpg');
-  var shape = new PhongTrianglesShape(triangles, material);
+  var shape = new TrianglesShape(triangles, material);
   var light = new DirectionalLight()
     ..transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, PI, 0.0);
   var camera = new PerspectiveCamera(0.3 * PI, 1.0, 1.0, 100.0)

@@ -1,13 +1,13 @@
 part of rendering.realtime.bagl;
 
-class LambertRenderUnit extends BaGLRenderUnit {
+class PhongRenderUnit extends BaGLRenderUnit {
   static final String vertexShaderSource =
-      INLINE_ASSET('package:scene_3d/shaders/lambert_vertex.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/phong_vertex.glsl');
 
   static final String fragmentShaderSource =
-      INLINE_ASSET('package:scene_3d/shaders/lambert_fragment.glsl');
+      INLINE_ASSET('package:scene_3d/shaders/phong_fragment.glsl');
 
-  final LambertMaterial material;
+  final PhongMaterial material;
 
   final PrimitiveSequence primitives;
 
@@ -29,6 +29,8 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
   Texture2D _activeDiffuseMap;
 
+  Texture2D _activeSpecularMap;
+
   Texture2D _activeEmissionMap;
 
   Texture2D _activeOpacityMap;
@@ -43,7 +45,7 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
   bool _programNeedsUpdate = true;
 
-  LambertRenderUnit(this.material, this.primitives, this.transform, this.scene,
+  PhongRenderUnit(this.material, this.primitives, this.transform, this.scene,
       this.frame, this.programPool) {
     frame.context.requestExtension('OES_standard_derivatives');
 
@@ -110,9 +112,11 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
   void update(Camera camera) {
     _uniforms['uWorld'] = transform.positionToWorld;
-    _uniforms['uViewProjection'] = camera.worldToClip;
     _uniforms['uNormal'] = transform.directionToWorld;
+    _uniforms['uViewProjection'] = camera.worldToClip;
+    _uniforms['uViewDirection'] = camera.transform.forward * -1.0;
     _uniforms['uOpacity'] = material.opacity;
+    _uniforms['uShininess'] = material.shininess;
 
     final diffuseMap = material.diffuseMap;
 
@@ -135,6 +139,29 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
     if (_activeDiffuseMap == null) {
       _uniforms['uDiffuseColor'] = material.diffuseColor;
+    }
+
+    final specularMap = material.specularMap;
+
+    if (specularMap != _activeSpecularMap) {
+      if (specularMap == null) {
+        _uniforms.remove('uSpecularMapSampler');
+
+        _programNeedsUpdate = true;
+      } else {
+        _uniforms.remove('uSpecularColor');
+        _uniforms['uSpecularMapSampler'] = new Sampler2D(specularMap);
+
+        if (_activeSpecularMap == null) {
+          _programNeedsUpdate = true;
+        }
+      }
+
+      _activeSpecularMap = specularMap;
+    }
+
+    if (_activeSpecularMap == null) {
+      _uniforms['uSpecularColor'] = material.specularColor;
     }
 
     final emissionMap = material.emissionMap;
@@ -206,6 +233,10 @@ class LambertRenderUnit extends BaGLRenderUnit {
         defines += '#define USE_DIFFUSE_MAP\n';
       }
 
+      if (_activeSpecularMap != null) {
+        defines += '#define USE_SPECULAR_MAP\n';
+      }
+
       if (_activeEmissionMap != null) {
         defines += '#define USE_EMISSION_MAP\n';
       }
@@ -250,50 +281,20 @@ class LambertRenderUnit extends BaGLRenderUnit {
   }
 }
 
-class LambertShapeView extends DelegatingIterable<LambertRenderUnit>
-    implements View<LambertRenderUnit> {
-  final LambertRenderUnit renderUnit;
-
-  final LambertTrianglesShape shape;
-
-  final Scene scene;
-
+class PhongRenderUnitFactory extends BaGLRenderUnitFactory {
   final Frame frame;
 
   final ProgramPool programPool;
 
-  LambertShapeView(LambertTrianglesShape shape, Scene scene, Frame frame,
-      ProgramPool programPool)
-      : renderUnit = new LambertRenderUnit(shape.material, shape.primitives,
-            shape.transform, scene, frame, programPool),
-        shape = shape,
-        scene = scene,
-        frame = frame,
-        programPool = programPool;
+  PhongRenderUnitFactory(this.frame, this.programPool);
 
-  Object get object => shape;
-
-  Iterable<LambertRenderUnit> get delegate => [renderUnit];
-
-  ViewChangeRecord<LambertRenderUnit> update(Camera camera) {
-    renderUnit.update(camera);
-
-    return new ViewChangeRecord.empty();
-  }
-}
-
-class LambertShapeViewFactory extends ChainableViewFactory<BaGLRenderUnit> {
-  final Frame frame;
-
-  final ProgramPool programPool;
-
-  LambertShapeViewFactory(this.frame, this.programPool);
-
-  View<BaGLRenderUnit> makeView(Object object, Scene scene) {
-    if (object is LambertTrianglesShape) {
-      return new LambertShapeView(object, scene, frame, programPool);
+  BaGLRenderUnit makeRenderUnit(Material material, PrimitiveSequence primitives,
+      Transform transform, Scene scene) {
+    if (material is PhongMaterial) {
+      return new PhongRenderUnit(
+          material, primitives, transform, scene, frame, programPool);
     } else {
-      return super.makeView(object, scene);
+      return super.makeRenderUnit(material, primitives, transform, scene);
     }
   }
 }

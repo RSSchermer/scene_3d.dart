@@ -2,6 +2,8 @@
 library shape;
 
 import 'package:bagl/geometry.dart';
+import 'package:bagl/math.dart';
+import 'package:bagl/vertex_data.dart';
 
 import 'material.dart';
 import 'transform.dart';

@@ -18,7 +18,7 @@ main() {
   var material = new LambertMaterial()
     ..diffuseMap = new Texture2D.fromImageURL('dirt.jpg')
     ..normalMap = new Texture2D.fromImageURL('dirt_normal.jpg');
-  var shape = new LambertTrianglesShape(triangles, material)
+  var shape = new TrianglesShape(triangles, material)
     ..transform.translation = new Vector3(0.0, -5.0, 0.0);
   var light = new SpotLight()
     ..transform.translation = new Vector3(0.0, 5.0, 0.0)

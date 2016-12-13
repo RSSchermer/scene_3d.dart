@@ -18,7 +18,7 @@ main() {
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0)
     ..specularMap = new Texture2D.fromImageURL('specular_map.png')
     ..shininess = 10.0;
-  var shape = new PhongTrianglesShape(triangles, material)
+  var shape = new TrianglesShape(triangles, material)
     ..transform.translation = new Vector3(0.0, -5.0, 0.0);
   var light = new PointLight()
     ..transform.translation = new Vector3(0.0, 5.0, 0.0)

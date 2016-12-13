@@ -1,6 +1,6 @@
 part of material;
 
-class LambertMaterial implements Material {
+class LambertMaterial implements SurfaceMaterial {
   String name;
 
   Blending blending = const Blending(
