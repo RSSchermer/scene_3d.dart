@@ -1,24 +1,23 @@
 precision mediump float;
 
+uniform vec3 uEmissionColor;
+uniform float uOpacity;
+
 varying vec2 vTexCoord;
 
 #ifdef USE_EMISSION_MAP
   uniform sampler2D uEmissionMapSampler;
-#else
-  uniform vec3 uEmissionColor;
 #endif
 
 #ifdef USE_OPACITY_MAP
   uniform sampler2D uOpacityMapSampler;
 #endif
 
-uniform float uOpacity;
-
 void main(void) {
   vec3 colorRGB;
 
   #ifdef USE_EMISSION_MAP
-    colorRGB = texture2D(uEmissionMapSampler, vTexCoord).rgb;
+    colorRGB = uEmissionColor * texture2D(uEmissionMapSampler, vTexCoord).rgb;
   #else
     colorRGB = uEmissionColor;
   #endif

@@ -39,6 +39,8 @@ class ConstantRenderUnit extends BaGLRenderUnit {
   void update(Camera camera) {
     _uniforms['uWorld'] = transform.positionToWorld;
     _uniforms['uViewProjection'] = camera.worldToClip;
+    _uniforms['uEmissionColor'] = material.emissionColor;
+    _uniforms['uOpacity'] = material.opacity;
 
     final emissionMap = material.emissionMap;
 
@@ -48,7 +50,6 @@ class ConstantRenderUnit extends BaGLRenderUnit {
 
         _programNeedsUpdate = true;
       } else {
-        _uniforms.remove('uEmissionColor');
         _uniforms['uEmissionMapSampler'] = new Sampler2D(emissionMap);
 
         if (_activeEmissionMap == null) {
@@ -57,10 +58,6 @@ class ConstantRenderUnit extends BaGLRenderUnit {
       }
 
       _activeEmissionMap = emissionMap;
-    }
-
-    if (_activeEmissionMap == null) {
-      _uniforms['uEmissionColor'] = material.emissionColor;
     }
 
     final opacityMap = material.opacityMap;
@@ -80,8 +77,6 @@ class ConstantRenderUnit extends BaGLRenderUnit {
 
       _activeOpacityMap = opacityMap;
     }
-
-    _uniforms['uOpacity'] = material.opacity;
 
     if (_programNeedsUpdate) {
       var defines = '';

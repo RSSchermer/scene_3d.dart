@@ -1,6 +1,9 @@
 precision mediump float;
 
 uniform vec3 uViewDirection;
+uniform vec3 uDiffuseColor;
+uniform vec3 uSpecularColor;
+uniform vec3 uEmissionColor;
 uniform float uOpacity;
 uniform float uShininess;
 
@@ -10,20 +13,14 @@ varying vec3 vNormal;
 
 #ifdef USE_DIFFUSE_MAP
   uniform sampler2D uDiffuseMapSampler;
-#else
-  uniform vec3 uDiffuseColor;
 #endif
 
 #ifdef USE_SPECULAR_MAP
   uniform sampler2D uSpecularMapSampler;
-#else
-  uniform vec3 uSpecularColor;
 #endif
 
 #ifdef USE_EMISSION_MAP
   uniform sampler2D uEmissionMapSampler;
-#else
-  uniform vec3 uEmissionColor;
 #endif
 
 #ifdef USE_OPACITY_MAP
@@ -105,21 +102,21 @@ void main(void) {
   #ifdef USE_DIFFUSE_MAP
     vec4 s = texture2D(uDiffuseMapSampler, vTexCoord);
 
-    colorRGB += s.rgb * totalIrradiance;
+    colorRGB += uDiffuseColor * s.rgb * totalIrradiance;
     colorAlpha *= s.a;
   #else
     colorRGB += uDiffuseColor * totalIrradiance;
   #endif
 
   #ifdef USE_SPECULAR_MAP
-    colorRGB +=
-        texture2D(uSpecularMapSampler, vTexCoord).rgb * totalSpecularity;
+    colorRGB += uSpecularColor * texture2D(uSpecularMapSampler, vTexCoord).rgb
+        * totalSpecularity;
   #else
     colorRGB += uSpecularColor * totalSpecularity;
   #endif
 
   #ifdef USE_EMISSION_MAP
-    colorRGB += texture2D(uEmissionMapSampler, vTexCoord).rgb;
+    colorRGB += uEmissionColor * texture2D(uEmissionMapSampler, vTexCoord).rgb;
   #else
     colorRGB += uEmissionColor;
   #endif

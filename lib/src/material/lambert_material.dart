@@ -13,7 +13,7 @@ class LambertMaterial implements SurfaceMaterial {
 
   CullingMode faceCulling;
 
-  Vector3 diffuseColor = new Vector3(0.5, 0.5, 0.5);
+  Vector3 diffuseColor = new Vector3.constant(1.0);
 
   Texture2D diffuseMap;
 

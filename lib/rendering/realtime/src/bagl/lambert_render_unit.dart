@@ -112,6 +112,8 @@ class LambertRenderUnit extends BaGLRenderUnit {
     _uniforms['uWorld'] = transform.positionToWorld;
     _uniforms['uViewProjection'] = camera.worldToClip;
     _uniforms['uNormal'] = transform.directionToWorld;
+    _uniforms['uDiffuseColor'] = material.diffuseColor;
+    _uniforms['uEmissionColor'] = material.emissionColor;
     _uniforms['uOpacity'] = material.opacity;
 
     final diffuseMap = material.diffuseMap;
@@ -122,7 +124,6 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
         _programNeedsUpdate = true;
       } else {
-        _uniforms.remove('uDiffuseColor');
         _uniforms['uDiffuseMapSampler'] = new Sampler2D(diffuseMap);
 
         if (_activeDiffuseMap == null) {
@@ -133,10 +134,6 @@ class LambertRenderUnit extends BaGLRenderUnit {
       _activeDiffuseMap = diffuseMap;
     }
 
-    if (_activeDiffuseMap == null) {
-      _uniforms['uDiffuseColor'] = material.diffuseColor;
-    }
-
     final emissionMap = material.emissionMap;
 
     if (emissionMap != _activeEmissionMap) {
@@ -145,7 +142,6 @@ class LambertRenderUnit extends BaGLRenderUnit {
 
         _programNeedsUpdate = true;
       } else {
-        _uniforms.remove('uEmissionColor');
         _uniforms['uEmissionMapSampler'] = new Sampler2D(emissionMap);
 
         if (_activeEmissionMap == null) {
@@ -154,10 +150,6 @@ class LambertRenderUnit extends BaGLRenderUnit {
       }
 
       _activeEmissionMap = emissionMap;
-    }
-
-    if (_activeEmissionMap == null) {
-      _uniforms['uEmissionColor'] = material.emissionColor;
     }
 
     final opacityMap = material.opacityMap;

@@ -16,6 +16,7 @@ main() {
   var triangles = generateBoxTriangles(10.0, 10.0, 10.0);
   var material = new LambertMaterial()
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0)
+    ..emissionColor = new Vector3(1.0, 1.0, 1.0)
     ..emissionMap = new Texture2D.fromImageURL('emission_dot.png');
   var shape = new TrianglesShape(triangles, material);
   var light = new PointLight()

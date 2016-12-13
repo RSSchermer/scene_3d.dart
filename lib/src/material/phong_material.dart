@@ -13,11 +13,11 @@ class PhongMaterial implements SurfaceMaterial {
 
   CullingMode faceCulling;
 
-  Vector3 diffuseColor = new Vector3(0.5, 0.5, 0.5);
+  Vector3 diffuseColor = new Vector3.constant(1.0);
 
   Texture2D diffuseMap;
 
-  Vector3 specularColor = new Vector3(1.0, 1.0, 1.0);
+  Vector3 specularColor = new Vector3.constant(1.0);
 
   Texture2D specularMap;
 
