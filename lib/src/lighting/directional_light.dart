@@ -9,8 +9,7 @@ class DirectionalLight implements Light, Struct {
 
   Iterable<String> get members => const ['color', 'direction'];
 
-  bool hasMember(String member) =>
-      members.contains(member);
+  bool hasMember(String member) => members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
     f('color', color);

@@ -32,7 +32,8 @@ main() {
 
     update(num time) {
       shapes.forEach((shape) {
-        shape.transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
+        shape.transform.rotation =
+            new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
       });
 
       renderer.render(camera);

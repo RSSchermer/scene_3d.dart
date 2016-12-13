@@ -111,8 +111,8 @@ class Transform {
   Vector3 get position {
     if (_position == null) {
       if (_parentTransform != null) {
-        final local = new Vector4(
-            _translation.x, _translation.y, _translation.z, 1.0);
+        final local =
+            new Vector4(_translation.x, _translation.y, _translation.z, 1.0);
         final transformed = _parentTransform.positionToWorld * local;
 
         _position = new Vector3(transformed.x, transformed.y, transformed.z);
@@ -128,7 +128,10 @@ class Transform {
   /// space.
   Vector3 get right {
     if (_right == null) {
-      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+      if (parentTransform == null &&
+          scaling.x == 1.0 &&
+          scaling.y == 1.0 &&
+          scaling.z == 1.0) {
         _right = directionToWorld * new Vector3(1.0, 0.0, 0.0);
       } else {
         _right = (directionToWorld * new Vector3(1.0, 0.0, 0.0)).unitVector;
@@ -142,7 +145,10 @@ class Transform {
   /// space.
   Vector3 get up {
     if (_up == null) {
-      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+      if (parentTransform == null &&
+          scaling.x == 1.0 &&
+          scaling.y == 1.0 &&
+          scaling.z == 1.0) {
         _up = directionToWorld * new Vector3(0.0, 1.0, 0.0);
       } else {
         _up = (directionToWorld * new Vector3(0.0, 1.0, 0.0)).unitVector;
@@ -156,7 +162,10 @@ class Transform {
   /// space.
   Vector3 get forward {
     if (_forward == null) {
-      if (parentTransform == null && scaling.x == 1.0 && scaling.y == 1.0 && scaling.z == 1.0) {
+      if (parentTransform == null &&
+          scaling.x == 1.0 &&
+          scaling.y == 1.0 &&
+          scaling.z == 1.0) {
         _forward = directionToWorld * new Vector3(0.0, 0.0, 1.0);
       } else {
         _forward = (directionToWorld * new Vector3(0.0, 0.0, 1.0)).unitVector;
@@ -180,8 +189,7 @@ class Transform {
           new Matrix4.translation(translation.x, translation.y, translation.z);
       _rotationMatrix ??= rotation.asMatrix4();
       _scalingMatrix ??= new Matrix4.scale(scaling.x, scaling.y, scaling.z);
-      _positionToWorld =
-          _translationMatrix * _rotationMatrix * _scalingMatrix;
+      _positionToWorld = _translationMatrix * _rotationMatrix * _scalingMatrix;
 
       if (_parentTransform != null) {
         _positionToWorld = _parentTransform.positionToWorld * _positionToWorld;
@@ -201,18 +209,13 @@ class Transform {
   Matrix3 get directionToWorld {
     if (_directionToWorld == null) {
       final w = positionToWorld;
-      final m = new Matrix3(
-          w.r0c0,
-          w.r0c1,
-          w.r0c2,
-          w.r1c0,
-          w.r1c1,
-          w.r1c2,
-          w.r2c0,
-          w.r2c1,
-          w.r2c2);
+      final m = new Matrix3(w.r0c0, w.r0c1, w.r0c2, w.r1c0, w.r1c1, w.r1c2,
+          w.r2c0, w.r2c1, w.r2c2);
 
-      if (_parentTransform == null && _scaling.x == 1 && _scaling.y == 1 && _scaling.z == 1) {
+      if (_parentTransform == null &&
+          _scaling.x == 1 &&
+          _scaling.y == 1 &&
+          _scaling.z == 1) {
         _directionToWorld = m;
       } else {
         _directionToWorld = m.inverse.transpose;

@@ -1,4 +1,3 @@
-
 library scene;
 
 import 'package:bagl/math.dart';

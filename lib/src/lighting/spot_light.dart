@@ -33,15 +33,15 @@ class SpotLight implements Light, Struct {
   }
 
   Iterable<String> get members => const [
-    'position',
-    'color',
-    'direction',
-    'constantAttenuation',
-    'linearAttenuation',
-    'quadraticAttenuation',
-    'falloffExponent',
-    'falloffAngleCosine'
-  ];
+        'position',
+        'color',
+        'direction',
+        'constantAttenuation',
+        'linearAttenuation',
+        'quadraticAttenuation',
+        'falloffExponent',
+        'falloffAngleCosine'
+      ];
 
   bool hasMember(String member) => members.contains(member);
 

@@ -21,8 +21,7 @@ class PointLight implements Light, Struct {
         'quadraticAttenuation'
       ];
 
-  bool hasMember(String member) =>
-      members.contains(member);
+  bool hasMember(String member) => members.contains(member);
 
   void forEach(f(String member, dynamic value)) {
     f('position', transform.position);

@@ -21,8 +21,7 @@ class OrthographicCamera implements Camera {
 
   Matrix4 _positionToWorldPrevious;
 
-  OrthographicCamera(
-      magnificationVertical, aspectRatio, near, far)
+  OrthographicCamera(magnificationVertical, aspectRatio, near, far)
       : _magnificationVertical = magnificationVertical,
         _aspectRatio = aspectRatio,
         _near = near,
@@ -95,7 +94,8 @@ class OrthographicCamera implements Camera {
   double get magnificationHorizontal => magnificationVertical * aspectRatio;
 
   Matrix4 get worldToCamera {
-    if (_worldToCamera == null || !identical(transform.positionToWorld, _positionToWorldPrevious)) {
+    if (_worldToCamera == null ||
+        !identical(transform.positionToWorld, _positionToWorldPrevious)) {
       _worldToCamera = transform.positionToWorld.inverse;
     }
 

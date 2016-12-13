@@ -95,7 +95,8 @@ class PerspectiveCamera implements Camera {
   double get fovHorizontal => _fovVertical * _aspectRatio;
 
   Matrix4 get worldToCamera {
-    if (_worldToCamera == null || !identical(transform.positionToWorld, _positionToWorldPrevious)) {
+    if (_worldToCamera == null ||
+        !identical(transform.positionToWorld, _positionToWorldPrevious)) {
       _worldToCamera = transform.positionToWorld.inverse;
     }
 
@@ -104,7 +105,7 @@ class PerspectiveCamera implements Camera {
 
   Matrix4 get cameraToClip {
     _cameraToClip ??=
-    new Matrix4.perspective(_fovVertical, _aspectRatio, _near, _far);
+        new Matrix4.perspective(_fovVertical, _aspectRatio, _near, _far);
 
     return _cameraToClip;
   }

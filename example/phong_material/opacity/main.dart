@@ -16,7 +16,8 @@ import 'package:scene_3d/shape.dart';
 main() {
   var backdropTriangles = generateQuadTriangles(10.0, 10.0);
   var backdropMaterial = new ConstantMaterial()
-    ..emissionMap = new Texture2D.fromImageURL('checkerboard_color_gradient.png');
+    ..emissionMap =
+        new Texture2D.fromImageURL('checkerboard_color_gradient.png');
   var backdrop = new TrianglesShape(backdropTriangles, backdropMaterial);
 
   var cutoutTriangles = generateQuadTriangles(10.0, 10.0);
@@ -39,7 +40,8 @@ main() {
   var renderer = new ForwardRenderer(canvas, scene);
 
   update(num time) {
-    cutout.transform.rotation = new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
+    cutout.transform.rotation =
+        new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
 
     renderer.render(camera);
 

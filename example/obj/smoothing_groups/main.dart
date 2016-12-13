@@ -15,7 +15,8 @@ main() {
   final material = new PhongMaterial()
     ..specularColor = new Vector3(0.3, 0.3, 0.3);
 
-  loadObj('smooth_cylinder.obj', defaultTrianglesMaterial: material).then((shapes) {
+  loadObj('smooth_cylinder.obj', defaultTrianglesMaterial: material)
+      .then((shapes) {
     var light = new PointLight()
       ..transform.translation = new Vector3(0.0, 0.0, 10.0)
       ..quadraticAttenuation = 0.001;
@@ -35,7 +36,8 @@ main() {
 
     update(num time) {
       shapes.forEach((shape) {
-        shape.transform.rotation = new Quaternion.fromEulerAnglesXYZ(time / 5000, time / 1000, 0.0);
+        shape.transform.rotation =
+            new Quaternion.fromEulerAnglesXYZ(time / 5000, time / 1000, 0.0);
       });
 
       renderer.render(camera);

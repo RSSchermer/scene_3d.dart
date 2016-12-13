@@ -46,16 +46,12 @@ class PointsShape implements PrimitivesShape<Point> {
           '`primitives`.');
     } else {
       return new PointsShape._internal(
-          primitives,
-          material,
-          positionAttributeName);
+          primitives, material, positionAttributeName);
     }
   }
 
   PointsShape._internal(
-      this.primitives,
-      this.material,
-      this.positionAttributeName);
+      this.primitives, this.material, this.positionAttributeName);
 }
 
 class LinesShape implements PrimitivesShape<Line> {
@@ -80,16 +76,12 @@ class LinesShape implements PrimitivesShape<Line> {
           '`primitives`.');
     } else {
       return new LinesShape._internal(
-          primitives,
-          material,
-          positionAttributeName);
+          primitives, material, positionAttributeName);
     }
   }
 
   LinesShape._internal(
-      this.primitives,
-      this.material,
-      this.positionAttributeName);
+      this.primitives, this.material, this.positionAttributeName);
 }
 
 class TrianglesShape implements PrimitivesShape<Triangle> {

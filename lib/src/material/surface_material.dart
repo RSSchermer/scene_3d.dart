@@ -1,5 +1,3 @@
 part of material;
 
-abstract class SurfaceMaterial extends Material {
-
-}
+abstract class SurfaceMaterial extends Material {}

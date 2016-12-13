@@ -1,6 +1,7 @@
 part of material;
 
-typedef Map<String, dynamic> UniformResolver(ProgramPrimitivesShape shape, Camera camera, Scene scene);
+typedef Map<String, dynamic> UniformResolver(
+    ProgramPrimitivesShape shape, Camera camera, Scene scene);
 
 class ProgramMaterial implements Material {
   String name;

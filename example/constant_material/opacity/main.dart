@@ -17,8 +17,7 @@ main() {
   var backdropMaterial = new ConstantMaterial()
     ..emissionMap =
         new Texture2D.fromImageURL('checkerboard_color_gradient.png');
-  var backdrop =
-      new TrianglesShape(backdropTriangles, backdropMaterial);
+  var backdrop = new TrianglesShape(backdropTriangles, backdropMaterial);
 
   var cutoutTriangles = generateQuadTriangles(10.0, 10.0);
   var cutoutMaterial = new ConstantMaterial()
