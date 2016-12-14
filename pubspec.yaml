@@ -14,6 +14,7 @@ dependencies:
   objectivist:
     git: 'https://github.com/RSSchermer/objectivist.dart.git'
   observable: '^0.20.1'
+  path: '^1.4.1'
   quiver: '^0.24.0'
 dev_dependencies:
   test: '^0.12.17'
