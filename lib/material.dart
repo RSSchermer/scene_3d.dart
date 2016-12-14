@@ -10,7 +10,6 @@ import 'camera.dart';
 import 'scene.dart';
 import 'shape.dart';
 
-part 'src/material/blinn_material.dart';
 part 'src/material/constant_material.dart';
 part 'src/material/lambert_material.dart';
 part 'src/material/line_material.dart';

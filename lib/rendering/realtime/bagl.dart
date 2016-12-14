@@ -21,7 +21,6 @@ import 'sorting.dart';
 
 part 'src/bagl/bagl_render_unit.dart';
 part 'src/bagl/forward_renderer.dart';
-part 'src/bagl/blinn_rendering.dart';
 part 'src/bagl/constant_render_unit.dart';
 part 'src/bagl/lambert_render_unit.dart';
 part 'src/bagl/null_view.dart';
