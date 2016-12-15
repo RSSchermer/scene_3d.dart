@@ -6,7 +6,6 @@ import 'package:bagl/bagl.dart';
 
 import 'package:scene_3d/rendering/realtime/bagl.dart';
 import 'package:scene_3d/camera.dart';
-import 'package:scene_3d/geometry_generators.dart';
 import 'package:scene_3d/lighting.dart';
 import 'package:scene_3d/material.dart';
 import 'package:scene_3d/quaternion.dart';
@@ -14,18 +13,16 @@ import 'package:scene_3d/scene.dart';
 import 'package:scene_3d/shape.dart';
 
 main() {
-  var backdropTriangles = generateQuadTriangles(10.0, 10.0);
   var backdropMaterial = new ConstantMaterial()
     ..emissionMap =
         new Texture2D.fromImageURL('checkerboard_color_gradient.png');
-  var backdrop = new TrianglesShape(backdropTriangles, backdropMaterial);
+  var backdrop = new TrianglesShape.quad(10.0, 10.0, backdropMaterial);
 
-  var cutoutTriangles = generateQuadTriangles(10.0, 10.0);
   var cutoutMaterial = new LambertMaterial()
     ..diffuseColor = new Vector3(1.0, 0.0, 0.0)
     ..opacity = 0.8
     ..opacityMap = new Texture2D.fromImageURL('opacity_map.png');
-  var cutout = new TrianglesShape(cutoutTriangles, cutoutMaterial)
+  var cutout = new TrianglesShape.quad(10.0, 10.0, cutoutMaterial)
     ..transform.translation = new Vector3(0.0, 0.0, 2.0);
 
   var light = new DirectionalLight()

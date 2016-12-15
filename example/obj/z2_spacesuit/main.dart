@@ -6,7 +6,6 @@ import 'package:bagl/bagl.dart';
 import 'package:scene_3d/rendering/realtime/bagl.dart';
 import 'package:scene_3d/camera.dart';
 import 'package:scene_3d/lighting.dart';
-import 'package:scene_3d/material.dart';
 import 'package:scene_3d/quaternion.dart';
 import 'package:scene_3d/scene.dart';
 import 'package:scene_3d/obj_loading.dart';
@@ -29,7 +28,7 @@ main() {
       shapes.forEach((shape) {
         shape
           ..transform.rotation =
-        new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
+              new Quaternion.fromEulerAnglesXYZ(0.0, time / 1000, 0.0);
       });
 
       renderer.render(camera);
