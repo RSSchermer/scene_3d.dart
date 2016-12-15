@@ -1,7 +1,7 @@
 part of shape.loading.obj;
 
 class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
-  final Uri uri;
+  final Uri sourceUri;
 
   final int vertexDataChunkSize;
 
@@ -11,7 +11,7 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   UsemtlStatement _activeUsemtlStatement;
 
-  List<Future<_MtlBuilderResult>> _mtlLibraries = [];
+  Map<String, Future<_MtlBuilderResult>> _mtlLibrariesByFilename = {};
 
   _ChunkedAttributeData _positionData;
 
@@ -27,9 +27,9 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
 
   List<_ShapeRange> _trianglesRanges = [];
 
-  final List<ObjReadingError> _errors = [];
+  final List<ReadingError> _errors = [];
 
-  _StatementVisitingShapesBuilder(this.uri,
+  _StatementVisitingShapesBuilder(this.sourceUri,
       {this.vertexDataChunkSize: 1000, this.indexDataChunkSize: 3000}) {
     _positionData = new _ChunkedAttributeData(4, vertexDataChunkSize);
     _normalData = new _ChunkedAttributeData(3, vertexDataChunkSize);
@@ -112,8 +112,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
             row[2] = position[2];
             row[3] = position[3];
           } else {
-            _errors.add(new ObjReadingError(
-                statement.lineNumber, 'Invalid `v` reference: $vNum.'));
+            _errors.add(new ObjReadingError(sourceUri, statement.lineNumber,
+                'Invalid `v` reference: $vNum.'));
           }
 
           if (vnNum != null) {
@@ -126,8 +126,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
               row[5] = normal[1];
               row[6] = normal[2];
             } else {
-              _errors.add(new ObjReadingError(
-                  statement.lineNumber, 'Invalid `vn` reference: $vnNum.'));
+              _errors.add(new ObjReadingError(sourceUri, statement.lineNumber,
+                  'Invalid `vn` reference: $vnNum.'));
             }
           }
 
@@ -140,8 +140,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
               row[7] = texCoord[0];
               row[8] = 1.0 - texCoord[1];
             } else {
-              _errors.add(new ObjReadingError(
-                  statement.lineNumber, 'Invalid `vt` reference: $vtNum.'));
+              _errors.add(new ObjReadingError(sourceUri, statement.lineNumber,
+                  'Invalid `vt` reference: $vtNum.'));
             }
           }
 
@@ -199,7 +199,7 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
         }
       }
     } else {
-      _errors.add(new ObjReadingError(statement.lineNumber,
+      _errors.add(new ObjReadingError(sourceUri, statement.lineNumber,
           'An `f` statement must define at least 3 vertices.'));
     }
   }
@@ -253,25 +253,29 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   }
 
   void visitMtllibStatement(MtllibStatement statement) {
-    final dirname = path.dirname(uri.path);
+    final dirname = path.dirname(sourceUri.path);
 
     for (var filename in statement.filenames) {
-      final uri =
-          path.isAbsolute(filename) ? filename : path.join(dirname, filename);
-      final resource = new Resource(uri);
-      final builder = new _StatementVisitingMtlBuilder(resource.uri);
+      final normalized = path.normalize(filename);
 
-      final mtlLibrary =
-          statementizeMtlResourceStreamed(resource).forEach((results) {
-        // TODO: make reading errors implement common interface in objectivist
-        // _errors.addAll(results.errors);
+      if (!_mtlLibrariesByFilename.containsKey(normalized)) {
+        final uri = path.isAbsolute(normalized)
+            ? normalized
+            : path.join(dirname, normalized);
+        final resource = new Resource(uri);
+        final builder = new _StatementVisitingMtlBuilder(resource.uri);
 
-        for (var statement in results) {
-          statement.acceptVisit(builder);
-        }
-      }).then((_) => builder.build());
+        final mtlLibrary =
+            statementizeMtlResourceStreamed(resource).forEach((results) {
+          _errors.addAll(results.errors);
 
-      _mtlLibraries.add(mtlLibrary);
+          for (var statement in results) {
+            statement.acceptVisit(builder);
+          }
+        }).then((_) => builder.build());
+
+        _mtlLibrariesByFilename[normalized] = mtlLibrary;
+      }
     }
   }
 
@@ -308,7 +312,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
       shapes.add(new _TrianglesShapeResult(triangles, range.usemtlStatement));
     }
 
-    return new _ObjBuilderResult(shapes, _mtlLibraries, _errors);
+    return new _ObjBuilderResult(
+        shapes, _mtlLibrariesByFilename.values, _errors);
   }
 
   void _finishTrianglesRange() {

@@ -1,7 +1,7 @@
 part of shape.loading.obj;
 
 class _StatementVisitingMtlBuilder implements MtlStatementVisitor {
-  final Uri uri;
+  final Uri sourceUri;
 
   Map<String, PhongMaterial> _materialsByName = {};
 
@@ -23,10 +23,9 @@ class _StatementVisitingMtlBuilder implements MtlStatementVisitor {
 
   Texture2D _opacityMap;
 
-  _StatementVisitingMtlBuilder(this.uri);
+  _StatementVisitingMtlBuilder(this.sourceUri);
 
   void visitBumpStatement(BumpStatement statement) {
-    print('test');
     _normalMap = new Texture2D.fromImageURL(_filenameToUri(statement.filename));
   }
 
@@ -137,7 +136,7 @@ class _StatementVisitingMtlBuilder implements MtlStatementVisitor {
     if (path.isAbsolute(filename)) {
       return filename;
     } else {
-      return path.join(path.dirname(uri.path), filename);
+      return path.join(path.dirname(sourceUri.path), filename);
     }
   }
 }

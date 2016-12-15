@@ -7,6 +7,7 @@ import 'package:bagl/geometry.dart';
 import 'package:bagl/math.dart';
 import 'package:bagl/texture.dart';
 import 'package:bagl/vertex_data.dart';
+import 'package:objectivist/errors.dart';
 import 'package:objectivist/mtl_reading.dart';
 import 'package:objectivist/mtl_statements.dart';
 import 'package:objectivist/obj_reading.dart';
@@ -16,17 +17,17 @@ import 'package:path/path.dart' as path;
 import 'package:resource/resource.dart';
 import 'package:scene_3d/material.dart';
 import 'package:scene_3d/shape.dart';
+import 'package:scene_3d/transform.dart';
 
 part 'src/obj/_chunked_attribute_data.dart';
 part 'src/obj/_chunked_index_data.dart';
 part 'src/obj/_statement_visiting_materials_builder.dart';
 part 'src/obj/_statement_visiting_shapes_builder.dart';
 
-Future<Iterable<PrimitivesShape>> loadObj(String uri,
-    {SurfaceMaterial defaultMaterial}) {
+Future<ObjResult> loadObj(String uri, {SurfaceMaterial defaultMaterial}) {
   final resource = new Resource(uri);
   final builder = new _StatementVisitingShapesBuilder(resource.uri);
-  final errors = [];
+  final errors = <ReadingError>[];
 
   defaultMaterial ??= new PhongMaterial();
 
@@ -46,7 +47,7 @@ Future<Iterable<PrimitivesShape>> loadObj(String uri,
         errors.addAll(result.errors);
       }
 
-      final shapes = [];
+      final shapes = <PrimitivesShape>[];
 
       results.triangleShapeResults.forEach((result) {
         final usemtlStatement = result.usemtlStatement;
@@ -67,6 +68,7 @@ Future<Iterable<PrimitivesShape>> loadObj(String uri,
 
           if (material == null) {
             errors.add(new ObjReadingError(
+                resource.uri,
                 usemtlStatement.lineNumber,
                 'Could not find a material named "$materialName" in any of the '
                 'referenced material libraries.'));
@@ -76,7 +78,25 @@ Future<Iterable<PrimitivesShape>> loadObj(String uri,
         }
       });
 
-      return shapes;
+      final objResult = new ObjResult._internal(uri, shapes, errors);
+
+      for (var shape in shapes) {
+        shape.transform.parentTransform = objResult.transform;
+      }
+
+      return objResult;
     });
   });
+}
+
+class ObjResult {
+  final String uri;
+
+  final Iterable<PrimitivesShape> shapes;
+
+  final Iterable<ReadingError> errors;
+
+  final Transform transform = new Transform();
+
+  ObjResult._internal(this.uri, this.shapes, this.errors);
 }
