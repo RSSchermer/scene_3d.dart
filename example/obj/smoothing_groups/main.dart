@@ -9,7 +9,7 @@ import 'package:scene_3d/lighting.dart';
 import 'package:scene_3d/material.dart';
 import 'package:scene_3d/quaternion.dart';
 import 'package:scene_3d/scene.dart';
-import 'package:scene_3d/obj_loading.dart';
+import 'package:scene_3d/shape/loading/obj.dart';
 
 main() {
   final material = new PhongMaterial()

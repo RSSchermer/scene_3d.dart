@@ -1,80 +1,4 @@
-library obj_file_parser;
-
-import 'dart:async';
-import 'dart:typed_data';
-
-import 'package:bagl/geometry.dart';
-import 'package:bagl/math.dart';
-import 'package:bagl/texture.dart';
-import 'package:bagl/vertex_data.dart';
-import 'package:objectivist/mtl_reading.dart';
-import 'package:objectivist/mtl_statements.dart';
-import 'package:objectivist/obj_reading.dart';
-import 'package:objectivist/obj_reading/errors.dart';
-import 'package:objectivist/obj_statements.dart';
-import 'package:path/path.dart' as path;
-import 'package:resource/resource.dart';
-
-import 'material.dart';
-import 'shape.dart';
-
-Future<Iterable<PrimitivesShape>> loadObj(String uri,
-    {SurfaceMaterial defaultMaterial}) {
-  final resource = new Resource(uri);
-  final builder = new _StatementVisitingShapesBuilder(resource.uri);
-  final errors = [];
-
-  defaultMaterial ??= new PhongMaterial();
-
-  return statementizeObjResourceStreamed(resource).forEach((results) {
-    errors.addAll(results.errors);
-
-    for (var statement in results) {
-      statement.acceptVisit(builder);
-    }
-  }).then((_) {
-    final results = builder.build();
-
-    errors.addAll(results.errors);
-
-    return Future.wait(results.mtlBuilderResults).then((mtlBuilderResults) {
-      for (var result in mtlBuilderResults) {
-        errors.addAll(result.errors);
-      }
-
-      final shapes = [];
-
-      results.triangleShapeResults.forEach((result) {
-        final usemtlStatement = result.usemtlStatement;
-
-        if (usemtlStatement == null) {
-          shapes.add(new TrianglesShape(result.triangles, defaultMaterial));
-        } else {
-          final materialName = usemtlStatement.materialName;
-          var material;
-
-          for (var mtlLibrary in mtlBuilderResults) {
-            material = mtlLibrary.materialsByName[materialName];
-
-            if (material != null) {
-              break;
-            }
-          }
-
-          if (material == null) {
-            errors.add(new ObjReadingError(usemtlStatement.lineNumber,
-                'Could not find a material named "$materialName" in any of the '
-                'referenced material libraries.'));
-          } else {
-            shapes.add(new TrianglesShape(result.triangles, material));
-          }
-        }
-      });
-
-      return shapes;
-    });
-  });
-}
+part of shape.loading.obj;
 
 class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   final Uri uri;
@@ -106,8 +30,7 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
   final List<ObjReadingError> _errors = [];
 
   _StatementVisitingShapesBuilder(this.uri,
-      {this.vertexDataChunkSize: 1000,
-      this.indexDataChunkSize: 3000}) {
+      {this.vertexDataChunkSize: 1000, this.indexDataChunkSize: 3000}) {
     _positionData = new _ChunkedAttributeData(4, vertexDataChunkSize);
     _normalData = new _ChunkedAttributeData(3, vertexDataChunkSize);
     _texCoordData = new _ChunkedAttributeData(3, vertexDataChunkSize);
@@ -333,11 +256,13 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
     final dirname = path.dirname(uri.path);
 
     for (var filename in statement.filenames) {
-      final uri = path.isAbsolute(filename) ? filename : path.join(dirname, filename);
+      final uri =
+          path.isAbsolute(filename) ? filename : path.join(dirname, filename);
       final resource = new Resource(uri);
       final builder = new _StatementVisitingMtlBuilder(resource.uri);
 
-      final mtlLibrary = statementizeMtlResourceStreamed(resource).forEach((results) {
+      final mtlLibrary =
+          statementizeMtlResourceStreamed(resource).forEach((results) {
         // TODO: make reading errors implement common interface in objectivist
         // _errors.addAll(results.errors);
 
@@ -393,145 +318,8 @@ class _StatementVisitingShapesBuilder implements ObjStatementVisitor {
     final count = _trianglesIndexData.indexCount - offset;
 
     if (count > 0) {
-      _trianglesRanges.add(
-          new _ShapeRange(offset, count, _activeUsemtlStatement));
-    }
-  }
-}
-
-class _StatementVisitingMtlBuilder implements MtlStatementVisitor {
-  final Uri uri;
-
-  Map<String, PhongMaterial> _materialsByName = {};
-
-  String _name;
-
-  double _opacity;
-
-  double _shininess;
-
-  Vector3 _diffuseColor;
-
-  Vector3 _specularColor;
-
-  Texture2D _diffuseMap;
-
-  Texture2D _specularMap;
-
-  Texture2D _normalMap;
-
-  Texture2D _opacityMap;
-
-  _StatementVisitingMtlBuilder(this.uri);
-
-  void visitBumpStatement(BumpStatement statement) {
-    print('test');
-    _normalMap = new Texture2D.fromImageURL(_filenameToUri(statement.filename));
-  }
-
-  void visitDStatement(DStatement statement) {
-    _opacity = statement.factor;
-  }
-
-  void visitDecalStatement(DecalStatement statement) {}
-
-  void visitDispStatement(DispStatement statement) {}
-
-  void visitIllumStatement(IllumStatement statement) {}
-
-  void visitKaStatement(KaStatement statement) {}
-
-  void visitKdStatement(KdStatement statement) {
-    final color = statement.reflectionColor;
-
-    if (color is RGB) {
-      _diffuseColor = new Vector3(color.r, color.g ?? color.r, color.b ?? color.r);
-    }
-  }
-
-  void visitKsStatement(KsStatement statement) {
-    final color = statement.reflectionColor;
-
-    if (color is RGB) {
-      _specularColor = new Vector3(color.r, color.g ?? color.r, color.b ?? color.r);
-    }
-  }
-
-  void visitMapAatStatement(MapAatStatement statement) {}
-
-  void visitMapDStatement(MapDStatement statement) {
-    _opacityMap = new Texture2D.fromImageURL(_filenameToUri(statement.filename));
-  }
-
-  void visitMapKaStatement(MapKaStatement statement) {}
-
-  void visitMapKdStatement(MapKdStatement statement) {
-    _diffuseMap = new Texture2D.fromImageURL(_filenameToUri(statement.filename));
-  }
-
-  void visitMapKsStatement(MapKsStatement statement) {
-    _specularMap = new Texture2D.fromImageURL(_filenameToUri(statement.filename));
-  }
-
-  void visitMapNsStatement(MapNsStatement statement) {}
-
-  void visitNewmtlStatement(NewmtlStatement statement) {
-    _finishMaterial();
-    _reset();
-
-    _name = statement.materialName;
-  }
-
-  void visitNiStatement(NiStatement statement) {}
-
-  void visitNsStatement(NsStatement statement) {
-    _shininess = statement.exponent;
-  }
-
-  void visitReflStatement(ReflStatement statement) {}
-
-  void visitSharpnessStatement(SharpnessStatement statement) {}
-
-  void visitTfStatement(TfStatement statement) {}
-
-  _MtlBuilderResult build() {
-    _finishMaterial();
-
-    return new _MtlBuilderResult(_materialsByName, []);
-  }
-
-  void _finishMaterial() {
-    if (_name != null) {
-      _materialsByName[_name] = new PhongMaterial()
-          ..name = _name
-          ..diffuseColor = _diffuseColor ?? new Vector3.constant(1.0)
-          ..diffuseMap = _diffuseMap
-          ..specularColor = _specularColor ?? new Vector3.constant(1.0)
-          ..specularMap = _specularMap
-          ..shininess = _shininess != null ? _shininess.toDouble() : 30.0
-          ..opacity = _opacity ?? 1.0
-          ..opacityMap = _opacityMap
-          ..normalMap = _normalMap;
-    }
-  }
-
-  void _reset() {
-    _name = null;
-    _diffuseColor = null;
-    _diffuseMap = null;
-    _specularColor = null;
-    _specularMap = null;
-    _shininess = null;
-    _opacity = null;
-    _opacityMap = null;
-    _normalMap = null;
-  }
-
-  String _filenameToUri(String filename) {
-    if (path.isAbsolute(filename)) {
-      return filename;
-    } else {
-      return path.join(path.dirname(uri.path), filename);
+      _trianglesRanges
+          .add(new _ShapeRange(offset, count, _activeUsemtlStatement));
     }
   }
 }
@@ -543,7 +331,8 @@ class _ObjBuilderResult {
 
   final List<ObjReadingError> errors;
 
-  _ObjBuilderResult(this.triangleShapeResults, this.mtlBuilderResults, this.errors);
+  _ObjBuilderResult(
+      this.triangleShapeResults, this.mtlBuilderResults, this.errors);
 }
 
 class _TrianglesShapeResult {
@@ -552,135 +341,6 @@ class _TrianglesShapeResult {
   final UsemtlStatement usemtlStatement;
 
   _TrianglesShapeResult(this.triangles, this.usemtlStatement);
-}
-
-class _MtlBuilderResult {
-  final Map<String, SurfaceMaterial> materialsByName;
-
-  final List<ObjReadingError> errors;
-
-  _MtlBuilderResult(this.materialsByName, this.errors);
-}
-
-class _ChunkedAttributeData {
-  final int rowLength;
-
-  final int chunkLength;
-
-  final List<AttributeDataTable> _filledChunks = [];
-
-  AttributeDataTable _activeChunk;
-
-  int _activeChunkFillCount = 0;
-
-  _ChunkedAttributeData(this.rowLength, this.chunkLength);
-
-  int get rowCount =>
-      _filledChunks.length * chunkLength + _activeChunkFillCount;
-
-  void addRow(List<double> values) {
-    _activeChunk ??= new AttributeDataTable(rowLength, chunkLength);
-
-    if (_activeChunkFillCount == chunkLength) {
-      _filledChunks.add(_activeChunk);
-      _activeChunk = new AttributeDataTable(rowLength, chunkLength);
-      _activeChunkFillCount = 0;
-    }
-
-    final currentRow = _activeChunk[_activeChunkFillCount];
-
-    for (var i = 0; i < rowLength && i < values.length; i++) {
-      currentRow[i] = values[i];
-    }
-
-    _activeChunkFillCount++;
-  }
-
-  AttributeDataRowView rowAt(int index) {
-    final chunkIndex = index ~/ chunkLength;
-    final rowIndex = index.remainder(chunkLength);
-
-    var chunk;
-
-    if (chunkIndex < _filledChunks.length) {
-      chunk = _filledChunks[chunkIndex];
-    } else if (chunkIndex == _filledChunks.length) {
-      chunk = _activeChunk;
-    }
-
-    if (chunk != null) {
-      return chunk[rowIndex];
-    } else {
-      return null;
-    }
-  }
-
-  AttributeDataTable asAttributeDataTable() {
-    final storage = new Float32List(rowCount * rowLength);
-    final chunkSize = chunkLength * rowLength;
-
-    for (var i = 0; i < _filledChunks.length; i++) {
-      final data = new Float32List.view(_filledChunks[i].buffer);
-      final start = i * chunkSize;
-
-      storage.setRange(start, start + chunkSize, data);
-    }
-
-    if (_activeChunk != null) {
-      final data = new Float32List.view(_activeChunk.buffer);
-      final start = _filledChunks.length * chunkSize;
-
-      storage.setRange(start, start + _activeChunkFillCount * rowLength, data);
-    }
-
-    return new AttributeDataTable.view(rowLength, storage.buffer);
-  }
-}
-
-class _ChunkedIndexData {
-  final int chunkLength;
-
-  final List<Uint16List> _filledChunks = [];
-
-  Uint16List _activeChunk;
-
-  int _activeChunkFillCount = 0;
-
-  _ChunkedIndexData(this.chunkLength);
-
-  int get indexCount =>
-      _filledChunks.length * chunkLength + _activeChunkFillCount;
-
-  void add(int index) {
-    _activeChunk ??= new Uint16List(chunkLength);
-
-    if (_activeChunkFillCount == chunkLength) {
-      _filledChunks.add(_activeChunk);
-      _activeChunk = new Uint16List(chunkLength);
-      _activeChunkFillCount = 0;
-    }
-
-    _activeChunk[_activeChunkFillCount] = index;
-    _activeChunkFillCount++;
-  }
-
-  IndexList asIndexList() {
-    final indexList = new IndexList(indexCount);
-
-    for (var i = 0; i < _filledChunks.length; i++) {
-      final start = i * chunkLength;
-
-      indexList.setRange(start, start + chunkLength, _filledChunks[i]);
-    }
-
-    if (_activeChunk != null) {
-      final start = _filledChunks.length * chunkLength;
-
-      indexList.setRange(start, start + _activeChunkFillCount, _activeChunk);
-    }
-
-    return indexList;
-  }
 }
 
 class _ShapeRange {
