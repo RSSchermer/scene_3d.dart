@@ -1,89 +1,5 @@
 part of shape;
 
-/// 3D shape consisting of geometric primitives for which the shading techniques
-/// and parameters are described by a [Material].
-///
-/// A [PrimitivesShape] consists of a set of geometric [primitives] (points,
-/// lines or triangles). The shading techniques and parameters that are to be
-/// used to render the [primitives] are described by its [material].
-abstract class PrimitivesShape<Primitive> {
-  /// A mutable label for this [PrimitivesShape].
-  String name;
-
-  /// The name of the position attribute on the vertices that define the
-  /// geometry of this [PrimitivesShape].
-  String get positionAttributeName;
-
-  /// The sequence of geometric primitives that makes up this
-  /// [PrimitivesShape].
-  PrimitiveSequence<Primitive> get primitives;
-
-  Transform get transform;
-
-  /// The [Material] that controls the appearance of the [primitives].
-  Material get material;
-}
-
-class PointsShape implements PrimitivesShape<Point> {
-  String name;
-
-  final Points primitives;
-
-  final String positionAttributeName;
-
-  final Transform transform = new Transform();
-
-  PointMaterial material;
-
-  factory PointsShape(Points primitives, Material material,
-      {String positionAttributeName: 'position'}) {
-    final vertexArray = primitives.vertexArray;
-    final positionAttribute = vertexArray.attributes[positionAttributeName];
-
-    if (positionAttribute == null || positionAttribute is! Vector4Attribute) {
-      throw new ArgumentError('The position attribute "$positionAttributeName" '
-          'did not resolve to a Vector4Attribute on the provided '
-          '`primitives`.');
-    } else {
-      return new PointsShape._internal(
-          primitives, material, positionAttributeName);
-    }
-  }
-
-  PointsShape._internal(
-      this.primitives, this.material, this.positionAttributeName);
-}
-
-class LinesShape implements PrimitivesShape<Line> {
-  String name;
-
-  final Lines primitives;
-
-  final String positionAttributeName;
-
-  final Transform transform = new Transform();
-
-  LineMaterial material;
-
-  factory LinesShape(Lines primitives, Material material,
-      {String positionAttributeName: 'position'}) {
-    final vertexArray = primitives.vertexArray;
-    final positionAttribute = vertexArray.attributes[positionAttributeName];
-
-    if (positionAttribute == null || positionAttribute is! Vector4Attribute) {
-      throw new ArgumentError('The position attribute "$positionAttributeName" '
-          'did not resolve to a Vector4Attribute on the provided '
-          '`primitives`.');
-    } else {
-      return new LinesShape._internal(
-          primitives, material, positionAttributeName);
-    }
-  }
-
-  LinesShape._internal(
-      this.primitives, this.material, this.positionAttributeName);
-}
-
 class TrianglesShape implements PrimitivesShape<Triangle> {
   String name;
 
@@ -200,7 +116,7 @@ class TrianglesShape implements PrimitivesShape<Triangle> {
       _normalAttribute = new Vector3Attribute(normalData);
 
       final attributeMap =
-          new Map<String, VertexAttribute>.from(vertexArray.attributes);
+      new Map<String, VertexAttribute>.from(vertexArray.attributes);
 
       attributeMap[normalAttributeName] = _normalAttribute;
 
