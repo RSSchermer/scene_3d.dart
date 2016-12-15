@@ -19,12 +19,12 @@ import 'material.dart';
 import 'shape.dart';
 
 Future<Iterable<PrimitivesShape>> loadObj(String uri,
-    {PhongMaterial defaultTrianglesMaterial}) {
+    {SurfaceMaterial defaultMaterial}) {
   final resource = new Resource(uri);
   final builder = new _StatementVisitingShapesBuilder(resource.uri);
   final errors = [];
 
-  defaultTrianglesMaterial ??= new PhongMaterial();
+  defaultMaterial ??= new PhongMaterial();
 
   return statementizeObjResourceStreamed(resource).forEach((results) {
     errors.addAll(results.errors);
@@ -48,7 +48,7 @@ Future<Iterable<PrimitivesShape>> loadObj(String uri,
         final usemtlStatement = result.usemtlStatement;
 
         if (usemtlStatement == null) {
-          shapes.add(new TrianglesShape(result.triangles, defaultTrianglesMaterial));
+          shapes.add(new TrianglesShape(result.triangles, defaultMaterial));
         } else {
           final materialName = usemtlStatement.materialName;
           var material;
@@ -503,6 +503,7 @@ class _StatementVisitingMtlBuilder implements MtlStatementVisitor {
   void _finishMaterial() {
     if (_name != null) {
       _materialsByName[_name] = new PhongMaterial()
+          ..name = _name
           ..diffuseColor = _diffuseColor ?? new Vector3.constant(1.0)
           ..diffuseMap = _diffuseMap
           ..specularColor = _specularColor ?? new Vector3.constant(1.0)

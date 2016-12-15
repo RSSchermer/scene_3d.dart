@@ -15,7 +15,7 @@ main() {
   final material = new PhongMaterial()
     ..specularColor = new Vector3(0.3, 0.3, 0.3);
 
-  loadObj('smooth_cylinder.obj', defaultTrianglesMaterial: material)
+  loadObj('smooth_cylinder.obj', defaultMaterial: material)
       .then((shapes) {
     var light = new PointLight()
       ..transform.translation = new Vector3(0.0, 0.0, 10.0)
