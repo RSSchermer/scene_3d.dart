@@ -24,69 +24,69 @@ part 'src/obj/_chunked_index_data.dart';
 part 'src/obj/_statement_visiting_materials_builder.dart';
 part 'src/obj/_statement_visiting_shapes_builder.dart';
 
-Future<ObjResult> loadObj(String uri, {SurfaceMaterial defaultMaterial}) {
+Future<ObjResult> loadObj(String uri, {SurfaceMaterial defaultMaterial}) async {
   final resource = new Resource(uri);
   final builder = new _StatementVisitingShapesBuilder(resource.uri);
+  final shapes = <PrimitivesShape>[];
   final errors = <ReadingError>[];
 
   defaultMaterial ??= new PhongMaterial();
 
-  return statementizeObjResourceStreamed(resource).forEach((results) {
+  await statementizeObjResourceStreamed(resource).forEach((results) {
     errors.addAll(results.errors);
 
     for (var statement in results) {
       statement.acceptVisit(builder);
     }
-  }).then((_) {
-    final results = builder.build();
-
-    errors.addAll(results.errors);
-
-    return Future.wait(results.mtlBuilderResults).then((mtlBuilderResults) {
-      for (var result in mtlBuilderResults) {
-        errors.addAll(result.errors);
-      }
-
-      final shapes = <PrimitivesShape>[];
-
-      results.triangleShapeResults.forEach((result) {
-        final usemtlStatement = result.usemtlStatement;
-
-        if (usemtlStatement == null) {
-          shapes.add(new TrianglesShape(result.triangles, defaultMaterial));
-        } else {
-          final materialName = usemtlStatement.materialName;
-          var material;
-
-          for (var mtlLibrary in mtlBuilderResults) {
-            material = mtlLibrary.materialsByName[materialName];
-
-            if (material != null) {
-              break;
-            }
-          }
-
-          if (material == null) {
-            errors.add(new ObjReadingError(
-                resource.uri,
-                usemtlStatement.lineNumber,
-                'Could not find a material named "$materialName" in any of the '
-                'referenced material libraries.'));
-          } else {
-            shapes.add(new TrianglesShape(result.triangles, material));
-          }
-        }
-      });
-
-      final objResult = new ObjResult._internal(uri, shapes, errors);
-
-      for (var shape in shapes) {
-        shape.transform.parentTransform = objResult.transform;
-      }
-
-      return objResult;
-    });
   });
+
+  final results = builder.build();
+
+  errors.addAll(results.errors);
+
+  final mtlBuilderResults = await Future.wait(results.mtlBuilderResults);
+
+  for (var result in mtlBuilderResults) {
+    errors.addAll(result.errors);
+  }
+
+  for (var result in results.triangleShapeResults) {
+    final usemtlStatement = result.usemtlStatement;
+
+    if (usemtlStatement == null) {
+      shapes.add(new TrianglesShape(result.triangles, defaultMaterial));
+    } else {
+      final materialName = usemtlStatement.materialName;
+
+      var material;
+
+      for (var mtlLibrary in mtlBuilderResults) {
+        material = mtlLibrary.materialsByName[materialName];
+
+        if (material != null) {
+          break;
+        }
+      }
+
+      if (material == null) {
+        errors.add(new ObjReadingError(
+            resource.uri,
+            usemtlStatement.lineNumber,
+            'Could not find a material named "$materialName" in any of the '
+            'referenced material libraries.'));
+      } else {
+        shapes.add(new TrianglesShape(result.triangles, material));
+      }
+    }
+  }
+
+  final objResult = new ObjResult._internal(uri, shapes, errors);
+
+  for (var shape in shapes) {
+    shape.transform.parentTransform = objResult.transform;
+  }
+
+  return objResult;
 }
 
 class ObjResult {
